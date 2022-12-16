@@ -84,7 +84,7 @@ for time in time_array:
     os.remove("temp.xvg")
 
 
-    convert_xvg = f"python3 {path} -f ./temp_clusters/hist_{TIME}.xvg -o ./temp_clusters/hist_{TIME}.csv"
+    convert_xvg = f"python3 {args.path} -f ./temp_clusters/hist_{TIME}.xvg -o ./temp_clusters/hist_{TIME}.csv"
     subprocess.call(convert_xvg.split())
 
     output_file.write(f"{TIME}")
