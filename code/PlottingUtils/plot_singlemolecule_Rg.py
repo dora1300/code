@@ -42,9 +42,9 @@ with open(args.f, "r") as f:
 
 # plot the Rg data
 fig, ax1 = plt.subplots()
-ax1.plot(Time, Rg, color=args.color, linewidth=1, marker="")
+ax1.plot(Time, Rg, color=args.color, linewidth=0.25, marker="")
 ax1.set_ylabel(r"Rg (nm)")
-ax1.set_ylim(0, np.amax(np.array(Rg))+0.1)
+ax1.set_ylim(0, np.amax(np.array(Rg))+0.5)
 plt.grid(color="black", linestyle=":", alpha=0.25)
 plt.xlabel("Simulation time (ps)")
 plt.title(args.title)
@@ -64,17 +64,19 @@ else:
         for line in f:
             if line[0] == "#" or line[0] == "@":
                 continue
+            elif line[0] == "&":
+                break
             else:
                 sp = line.lstrip(" ").rstrip("\n").split(",")
                 Tau.append(float(sp[0].rstrip()))
                 ACF.append(float(sp[1].rstrip()))
-                fig, ax1 = plt.subplots()
-            
-    ax1.plot(Tau, ACF, color=args.color, linewidth=1, marker="")
+                
+    fig, ax1 = plt.subplots()        
+    ax1.plot(Tau, ACF, color=args.color, linewidth=0.5, marker="")
     ax1.set_ylabel(r"Autocorrelation")
-    ax1.set_ylim(0, 1)
+    ax1.set_ylim(0, 1.1)
     plt.grid(color="black", linestyle=":", alpha=0.25)
-    plt.xlabel("$\tau$ (frames)")
+    plt.xlabel(r"$\tau$ (frames)")
     plt.title(f"{args.title} - ACF")
     plt.savefig(args.o2, dpi=300)
     plt.close()
