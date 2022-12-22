@@ -61,14 +61,14 @@ else:
     Tau = []
     
     with open(args.acf, "r") as f:
-    for line in f:
-        if line[0] == "#" or line[0] == "@":
-            continue
-        else:
-            sp = line.lstrip(" ").rstrip("\n").split(",")
-            Tau.append(float(sp[0].rstrip()))
-            ACF.append(float(sp[1].rstrip()))
-            fig, ax1 = plt.subplots()
+        for line in f:
+            if line[0] == "#" or line[0] == "@":
+                continue
+            else:
+                sp = line.lstrip(" ").rstrip("\n").split(",")
+                Tau.append(float(sp[0].rstrip()))
+                ACF.append(float(sp[1].rstrip()))
+                fig, ax1 = plt.subplots()
             
     ax1.plot(Tau, ACF, color=args.color, linewidth=1, marker="")
     ax1.set_ylabel(r"Autocorrelation")
