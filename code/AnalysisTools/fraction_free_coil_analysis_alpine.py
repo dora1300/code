@@ -10,6 +10,7 @@ The script calculates cluster sizes using an index file which specifies beads be
 This script is specifically for use on RMACC's Alpine super computer.
 
 @Updates:
+2022 12 23  -   Updated text in the arg parse to clarify information on args.n
 
 """
 import argparse
@@ -32,10 +33,10 @@ parser.add_argument('-ndx', help="(.ndx) Gromacs index file containing the atoms
     "A-BEADS that are to be analyzed. Be sure this is correct. There should only be 1 group "
     "in the index file.")
     
-parser.add_argument('-n', help="The number of atoms per coil segment in the index file. This is "
-    "critical to get right because the method depends on this value being correct.",
-    required=True, type=int)
-    
+parser.add_argument('-n', help="The number of atoms REPRESENTING each coil segment in the index"
+    " file. This IS NOT (necessarily) the total number of atoms per coil. This is critical to get"
+    " right because the method depends on this value being correct.", required=True, type=int)
+        
 parser.add_argument('-num_coil', help="The total number of coil segments in the system, or if "
     "you specified differently in the ndx file, the total number of coil segments in the .ndx "
     "file.", required=True, type=int)
