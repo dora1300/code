@@ -6,6 +6,9 @@
 @Description:       This script is a general plotting function to plot the Rg analysis from any
 simulation OF JUST ONE MOLECULE. This is not set up for multiple molecules.
 
+Updates:
+2022 12 22          Corrected the y-lim of the acf so that it goes to positive
+and negative values.
 """
 
 import argparse
@@ -21,7 +24,7 @@ parser.add_argument('-f', help="Input .csv file for analysis. Usually this comes
 parser.add_argument('-acf', help="Input .csv file for the autocorrelation function analysis,"
     " which also comes from 'gmx gyrate'. Include extension", default=None)
 parser.add_argument('-o', help="Name of the output png file.", default="rg_plot.png")
-parser.add_argument('-o2', help="Name of the output ACF png file.", default="rg__acf_plot.png")
+parser.add_argument('-o2', help="Name of the output ACF png file.", default="rg_acf_plot.png")
 parser.add_argument('-color', help="Specify the color to use for the plot.", default="blue")
 parser.add_argument("-title", help="A title for your plot, if you so desire")
 
@@ -74,9 +77,9 @@ else:
     fig, ax1 = plt.subplots()        
     ax1.plot(Tau, ACF, color=args.color, linewidth=0.5, marker="")
     ax1.set_ylabel(r"Autocorrelation")
-    ax1.set_ylim(0, 1.1)
+    ax1.set_ylim(-1.1, 1.1)
     plt.grid(color="black", linestyle=":", alpha=0.25)
-    plt.xlabel(r"$\tau$ (frames)")
+    plt.xlabel(r"lag-$\tau$")
     plt.title(f"{args.title} - ACF")
     plt.savefig(args.o2, dpi=300)
     plt.close()
