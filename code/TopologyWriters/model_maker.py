@@ -169,7 +169,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # --> This code is taken from the "topology_assistant_nonspecific_modularModel.py" script that I have.
-    # this handles (ignores) comments)
+    # this handles (ignores) comments
     # set up the list of segments, in order, and their corresponding indices, in order
     # Segments contains the names of each of the segments as they appear in order in the provided file
     # Positions contains the start/stop (and heptad) indices for the segments that correspond to the same index in the
@@ -186,7 +186,7 @@ if __name__ == "__main__":
             Segments.append(str(line_split[0]))
             if str(line_split[0]) == "coil":   # uses 0-indexing, this now handles the final column being oligo type
                 Positions.append([int(line_split[1]), int(line_split[2]), int(line_split[3]),
-                                  str(line_split[4]), line_split[5]]) # notice that index 5 has no type command!!!
+                                  str(line_split[4]), line_split[5]])  # notice that index 5 has no type command!!!
             else:
                 Positions.append([int(line_split[1]), int(line_split[2])])
 
@@ -196,7 +196,7 @@ if __name__ == "__main__":
         seg = Segments[i]
         segStart = Positions[i][0]
         segStop = Positions[i][1]
-        if seg == "linker":     #linker handling
+        if seg == "linker":     # linker handling
             model_sequence += "G" * (segStop - segStart + 1)
         else:                   # coil handling
             a_posits = []
