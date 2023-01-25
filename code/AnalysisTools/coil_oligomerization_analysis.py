@@ -114,7 +114,8 @@ with open(args.df, "r") as file:
         else:
             pass
 
-print(f"Parsed coil positions {Coil_positions_df}")
+print(f"Coil model file: {args.df}")
+print(f"Parsed coil positions (0-indexed): {Coil_positions_df}")
 
 # Now, for each coil, generate the A- and D- position A-beads FOR THE FIRST MODEL ONLY. I need to enumerate all the
 # a-bead positions first before I can generate all the a-beads for all the models
