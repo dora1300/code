@@ -431,7 +431,7 @@ def atom_helper(aStart, aStop, segment_type="linker", heptad_start=0, oligo=None
         OLIGO = "Tri"
 
     if oligo == "tet":
-        OLIGO == "Tet"
+        OLIGO = "Tet"
 
     if oligoID == "" or oligoID is None:
         oligoID = ""
@@ -476,9 +476,9 @@ def atom_helper(aStart, aStop, segment_type="linker", heptad_start=0, oligo=None
             elif posc in d_posits:
                 atom_string += f" {posc}   A{oligo}{oligoID}    {posc}    ILE     CA    {posc}    0.000    {MASS}\n"
             elif posc in e_posits:
-                atom_string += f" {posc}   {OLIGO}    {posc}    LYS     CA    {posc}    0.000    {MASS}\n"
+                atom_string += f" {posc}   {OLIGO}   {posc}    LYS     CA    {posc}    0.000    {MASS}\n"
             elif posc in g_posits:
-                atom_string += f" {posc}   {OLIGO}    {posc}    GLU     CA    {posc}    0.000    {MASS}\n"
+                atom_string += f" {posc}   {OLIGO}   {posc}    GLU     CA    {posc}    0.000    {MASS}\n"
             else:
                 atom_string += f" {posc}   B     {posc}    ALA     CA    {posc}    0.000    {MASS}\n"
 
