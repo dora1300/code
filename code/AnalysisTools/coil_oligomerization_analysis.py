@@ -18,6 +18,9 @@ heteromeric simulations.
 @Updates:
 2022 09 28 - added a feature to plot the distribution of oligomer sizes over time, and added a feature to choose the
 starting time for the simulation or at least as close to it as I can.
+
+@Updates:
+2023 02 21 - added at timing feature so I can keep track of how long this analysis takes.
 """
 
 import mdtraj as md
@@ -26,6 +29,7 @@ import matplotlib.pyplot as plt
 import argparse
 import os
 import pandas as pd
+import time
 
 
 """ Set up the arg parser """
@@ -68,6 +72,9 @@ print("PLEASE BE ADVISED: This code automatically converts the information provi
       "Also note that this code only needs to run once, since it outputs the data and then you can modify plots of that"
       "data without doing the entire analysis all over again.")
 print("**********\n")
+
+""" Begin the timing procedure, added 20230221 """
+time_start = time.perf_counter()
 
 # load the trajectory!
 traj_load = md.load(trajectory, top=topology)
@@ -264,6 +271,15 @@ for frame in range(0, traj.n_frames, args.f):
     HIGHER.append(frame_higherorder)
     SELF.append(frame_self)
     OTHER.append(frame_other)
+    
+""" End the timing work. This is because the majority of the time will happen above with the 
+actual calculation of the haystack """
+time_stop = time.perf_counter()
+elapsed_time = ((time_stop - time_start) / 60) / 60 
+# this reports the elapsed time in terms of hours
+print("-----------------------------")
+print(f"Elapsed time for the analysis fo haystack searing: {elapsed_time:.4f} hours")
+print("-----------------------------")
 
 
 # Handle the plotting of important information
