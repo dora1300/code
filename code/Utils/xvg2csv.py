@@ -35,7 +35,7 @@ with open(args.f, "r") as f:
             for i in range(len(sp)):
                 if len(sp[i]) == 0:
                     continue
-                elif i == (len(sp)-1):
+                elif i != (len(sp)-1):
                     out_file.write(f"{sp[i]},")
                 else:
                     out_file.write(f"{sp[i]}")
