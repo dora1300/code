@@ -32,13 +32,13 @@ with open(args.f, "r") as f:
             out_file.write(line)
         else:
             sp = line.lstrip(" ").rstrip("\n").split(" ")
-            for item in sp:
-                if len(item) == 0:
+            for i in range(len(sp)):
+                if len(sp[i]) == 0:
                     continue
-                elif item != sp[-1]:
-                    out_file.write(f"{item},")
+                elif i == (len(sp)-1):
+                    out_file.write(f"{sp[i]},")
                 else:
-                    out_file.write(f"{item}")
+                    out_file.write(f"{sp[i]}")
             out_file.write("\n")
 
 out_file.close()
