@@ -21,6 +21,9 @@ starting time for the simulation or at least as close to it as I can.
 
 @Updates:
 2023 02 21 - added at timing feature so I can keep track of how long this analysis takes.
+
+@Updates:
+2023 03 23 - added a feature to handle analyzing just a single frame i.e. pdb file.
 """
 
 import mdtraj as md
@@ -51,6 +54,8 @@ parser.add_argument("-p", help="toplogy file i.e. PDB file with extension", requ
 parser.add_argument("-start", help="the starting frame (in ps) to begin the analysis. Default = 0 [ps]", default=0,
                     type=int)
 parser.add_argument("-f", help="the stride of analysis i.e. analyze every fth frame, default = 1", default=1, type=int)
+parser.add_argument("-single", help="a switch to turn on if the analysis is only for a single structure file",
+    action="store_true", default=False)
 parser.add_argument("-name", help="name that you'd like to add to the analysis output files", default="")
 parser.add_argument("-timeseries", help="pass the flag to turn on plotting of oligomer data as a time series",
                     action="store_true", default=False)
@@ -77,16 +82,20 @@ print("**********\n")
 time_start = time.perf_counter()
 
 # load the trajectory!
-traj_load = md.load(trajectory, top=topology)
-frame_start = 0
-while frame_start <= traj_load.n_frames:
-    if int(frame_start * traj_load.timestep) >= args.start:
-        break
-    else:
-        frame_start += 1
-traj = traj_load[frame_start::]
-remaining_frames = traj_load.n_frames - frame_start
-analyzed_frames = remaining_frames / args.f
+if args.single:
+    traj = md.load(trajectory, top=topology)
+    args.f = 1
+else:
+    traj_load = md.load(trajectory, top=topology)
+    frame_start = 0
+    while frame_start <= traj_load.n_frames:
+        if int(frame_start * traj_load.timestep) >= args.start:
+            break
+        else:
+            frame_start += 1
+    traj = traj_load[frame_start::]
+    remaining_frames = traj_load.n_frames - frame_start
+    analyzed_frames = remaining_frames / args.f
 
 """
 Useful global constants
@@ -278,7 +287,7 @@ time_stop = time.perf_counter()
 elapsed_time = ((time_stop - time_start) / 60) / 60 
 # this reports the elapsed time in terms of hours
 print("-----------------------------")
-print(f"Elapsed time for the analysis fo haystack searing: {elapsed_time:.4f} hours")
+print(f"Elapsed time for the analysis fo haystack searching: {elapsed_time:.4f} hours")
 print("-----------------------------")
 
 
