@@ -43,8 +43,8 @@ parser.add_argument("-df", help="Definition file: this contains the information 
 parser.add_argument("-nmodels", help="The total number of models in the simulation", required=True, type=int)
 parser.add_argument("-N", help="The total number of coil segments in the simulation. Necessary for the distribution"
                                " plotting.", required=True, type=int)
-parser.add_argument("-l", help="No. of beads in the ENTIRE MODEL. This is not the size of an individual coil. This is "
-                               "the size of an entire individual model. As of right now, ONLY models that have the"
+parser.add_argument("-l", help="No. of beads in an ENTIRE SINGLE PROTEINS. This is not the size of an individual coil. This is "
+                               "the size of an entire individual protein. As of right now, ONLY proteins that have the"
                                " same no. of beads can be analyzed.",
                     required=True, type=int)
 parser.add_argument("-cutoff", help="The cut-off distance used to determine if two beads are close enough to be in "
@@ -85,6 +85,12 @@ time_start = time.perf_counter()
 if args.single:
     traj = md.load(trajectory, top=topology)
     args.f = 1
+    args.timeseries = False     # can't do timeseries for just 1 frame!
+        # this also adds a user sanity check to make sure that the code doesn't 
+        
+        # try to do something that doesn't make sense.
+    remaining_frames = 1
+    analyzed_frames = 1
 else:
     traj_load = md.load(trajectory, top=topology)
     frame_start = 0
@@ -361,3 +367,16 @@ pd.DataFrame(np.array(outputdata)).to_csv(f"{args.name}_oligoAnalysis_outData.cs
 
 print(f"Number of frames in trajectory after slicing from the starting point: {remaining_frames}")
 print(f"The total number of analyzed frames, based on the '-f' argument: {analyzed_frames}")
+if args.verbose:
+    print("""
+The output file is organized by rows, as follows:
+Row blank - column entries
+Row 0 - time (ps)
+Row 1 - Number of monomers
+Row 2 - Number of dimers
+Row 3 - Number of trimers
+Row 4 - Number of tetramers
+Row 5 - Number of higher order species
+Row 6 - Number of self-protein interactions
+Row 7 - Number of other-protein interactions
+""")
