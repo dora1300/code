@@ -319,8 +319,8 @@ if args.distro:
     plt.savefig(f"{args.name}_oligomeric_analysis_distribution.png", dpi=600)
 
 
-arFrames = np.arange(0+args.start, (traj.n_frames*traj.timestep)+args.start, (args.f*traj.timestep))
 if args.timeseries:
+    arFrames = np.arange(0+args.start, (traj.n_frames*traj.timestep)+args.start, (args.f*traj.timestep))
     fig, ax = plt.subplots()
     ax.plot(arFrames, np.array(FREE_COILS), color="black", label = "Free coils",
               linewidth=1)
