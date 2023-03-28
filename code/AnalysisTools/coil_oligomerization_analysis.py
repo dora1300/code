@@ -48,7 +48,7 @@ parser.add_argument("-l", help="No. of beads in an ENTIRE SINGLE PROTEINS. This 
                                " same no. of beads can be analyzed.",
                     required=True, type=int)
 parser.add_argument("-cutoff", help="The cut-off distance used to determine if two beads are close enough to be in "
-                                    "an oligomer. [nm]", default=1.25, type=float)
+                                    "an oligomer. [nm]", default=1.3, type=float)
 parser.add_argument("-t", help="trajectory file with extension (.xtc)", required=True)
 parser.add_argument("-p", help="toplogy file i.e. PDB file with extension", required=True)
 parser.add_argument("-start", help="the starting frame (in ps) to begin the analysis. Default = 0 [ps]", default=0,
@@ -110,7 +110,7 @@ A_CUTOFF = args.cutoff                 # in nanometers!
 NMODELS = args.nmodels
 MSIZE = args.l
 
-INTERACTION_CUTOFF = 0.5       # unitless. This says that 50% of beads between any two coils need to be interacting
+INTERACTION_CUTOFF = 0.75       # unitless. This says that 75% of beads between any two coils need to be interacting
                                 # for there to be an oligomer
 
 
@@ -224,6 +224,9 @@ for frame in range(0, traj.n_frames, args.f):
 
     # begin the primary loop through every coil and set variables
     for ci in range(len(MODELS_A_BEADS)):
+#         print()
+#         print(f"Working on coil: {ci}")
+#         time_start_model_loop = time.perf_counter()
         COIL_MODEL = 0
         COIL = MODELS_A_BEADS[ci]
         oligo_counter = 0
@@ -237,7 +240,10 @@ for frame in range(0, traj.n_frames, args.f):
                 pass
 
         # now loop through every other coil and see if COIL is neighbors with it
+        
         for ci2 in range(len(MODELS_A_BEADS)):
+#             print(f"Counting neighbors with: {ci2}")
+#             time_start_neighbor = time.perf_counter()
             if ci2 == ci:   # don't analyze current coil, duh
                 continue
             else:
@@ -258,6 +264,13 @@ for frame in range(0, traj.n_frames, args.f):
                                 self_interact += 1
                             else:
                                 other_interact += 1
+#             time_end_neighbor = time.perf_counter()
+#             elapsed_neighbor = (time_end_neighbor - time_start_neighbor) / 60.
+#             print(f"Time to calculate neighbors between coil i and coil j: {elapsed_neighbor:.4f} min")
+
+#         time_end_model_loop = time.perf_counter()
+#         elapsed_model_loop = (time_end_model_loop - time_start_model_loop) / 60.
+#         print(f"Time to calculate all neighbors with coil i: {elapsed_model_loop:.4f} min")
 
         # now we're done checking if COIL has neighbors with any other coil in the system
         if oligo_counter == 0:      # no interactions, free-floating coil
