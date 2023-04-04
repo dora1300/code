@@ -106,10 +106,10 @@ if args.sys:
     fullout = open(fullname, 'w')
 
     # Save the ensemble averaged data into a
-    shortout.write("Time averaged Rg calculations.\n")
+    shortout.write("Time averaged Rg calculations,\n")
     shortout.write(f"Average Rg (nm),{round(rg_average,4)}\n")
     shortout.write(f"StDev of Rg,{round(rg_stddev, 4)}\n")
-    shortout.write(f"AUC of Rg, (nm*ps),{round(auc,4)}\n")
+    shortout.write(f"AUC of Rg (nm*ps),{round(auc,4)}\n")
     shortout.write(f"Number of frames,{traj.n_frames-args.startF}\n")
 
     shortout.close()
