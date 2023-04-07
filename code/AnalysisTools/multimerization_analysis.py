@@ -1,14 +1,23 @@
 """
-@Title:             coil_oligomerization analysis.py
+@Title:             multimerization_analysis.py
 @Name:              Mando A Ramirez
-@Date:              2022 06 19
+@Date:              2023 04 06
 
-@Description:       This script analyzes the oligomeric state of coil simulations to produce statistics about the
-different types of oligomers and higher order assemblies that form with coils in a box. I am writing this script with
-slab simulations in mind so I can track the types of oligomers that form through simulation time. I will be calcualte
+@Description:       This script is an extension and improvement upon its related sister code,
+"coil_multimer_analysis.py".
+
+The difference between this and the other script is that this script calculates distances and 
+neighbors using the **centers of mass** of each coil's A beads. Additionally, the distance 
+calculations are "vectorized", meaning they happen all at once and I then figure out neighbors
+after that.
+
+
+This script analyzes the multimeric state of coil simulations to produce statistics about the
+different types of multimers and higher order assemblies that form with coils in a box. I am writing this script with
+slab simulations in mind so I can track the types of multimers that form through simulation time. I will be calcualte
 the following:
-    - the types of each oligomers through time (per-frame)
-    - the distribution of each oligomers for the whole simulation
+    - the types of each multimers through time (per-frame)
+    - the distribution of each multimers for the whole simulation
     - the number-per-frame and distribution of self-vs-other interactions
     - the number-per-frame and distribution of free coils for the simulation
 
@@ -16,15 +25,7 @@ This script will first be written to handle only homomeric simulations of models
 heteromeric simulations.
 
 @Updates:
-2022 09 28 - added a feature to plot the distribution of oligomer sizes over time, and added a feature to choose the
-starting time for the simulation or at least as close to it as I can.
 
-2023 02 21 - added at timing feature so I can keep track of how long this analysis takes.
-
-2023 03 23 - added a feature to handle analyzing just a single frame i.e. pdb file.
-
-2023 04 07 - this code is now obsolete. I'm include an exit() call immediately
-to prevent using it.
 """
 
 import mdtraj as md
@@ -35,21 +36,55 @@ import os
 import pandas as pd
 import time
 
+"""
+Function definitions
+"""
+def calc_COM(trajF, POSI, mass):
+    """
+    :param traj:    a *single frame* from a trajectory. DO NOT pass the entire trajectory
+    :param POSI:    the list of lists of coil positions, where each entry is the beads for 
+        a single coil that the COM will be calculated for
+    :param mass:    the mass used for ALL beads for the COM calculation
+    :return COMS:   array containing the COM coordinates for all of the coils 
+        enumerated in POSI
+    """
+    COMS = []
+    
+    for coilI, coilP in enumerate(POSI):
+        # coilI is the index of a given coil, same index for POSI and COMS
+        # coilP are the 0-indexed indices for the coil beads
+        coords = trajF.xyz[:,coilP,:][0]
+        coordsT = np.transpose(coords)
+        # coords is a Nx3 array, where each row corresponds to the xyz coords for a bead
+        # in the coilP
+        # I transpose this to 3xN so that each row becomes one of the coordinate dimensions
+        # for ALL The beads in the coil
+        
+        xCOM = float( mass*(np.sum(coordsT[0])) / (mass * len(coordsT[0])) )
+        yCOM = float( mass*(np.sum(coordsT[1])) / (mass * len(coordsT[1])) )
+        zCOM = float( mass*(np.sum(coordsT[2])) / (mass * len(coordsT[2])) )
+        
+        COMS.append(np.array([xCOM, yCOM, zCOM]))
+    
+    return np.array(COMS)
+
 
 """ Set up the arg parser """
-parser = argparse.ArgumentParser(description="Coil oligomerization tool - this determines the types of oligomers and"
+parser = argparse.ArgumentParser(description="Coil multimerization tool - this determines the types of multimers and"
                                              " higher order assemblies present in your coil simulations!")
 parser.add_argument("-df", help="Definition file: this contains the information on how to build the model, with"
                                 " alternating coil and linker segments.")
 parser.add_argument("-nmodels", help="The total number of models in the simulation", required=True, type=int)
 parser.add_argument("-N", help="The total number of coil segments in the simulation. Necessary for the distribution"
                                " plotting.", required=True, type=int)
-parser.add_argument("-l", help="No. of beads in an ENTIRE SINGLE PROTEINS. This is not the size of an individual coil. This is "
+parser.add_argument("-l", help="No. of beads in an ENTIRE SINGLE PROTEIN. This is not the size of an individual coil. This is "
                                "the size of an entire individual protein. As of right now, ONLY proteins that have the"
                                " same no. of beads can be analyzed.",
                     required=True, type=int)
+parser.add_argument("-mass", help="The mass of the CG beads. Currently, all beads need to be "
+    " the same mass.", type=float)
 parser.add_argument("-cutoff", help="The cut-off distance used to determine if two beads are close enough to be in "
-                                    "an oligomer. [nm]", default=1.3, type=float)
+                                    "an multimer. [nm]", default=1.3, type=float)
 parser.add_argument("-t", help="trajectory file with extension (.xtc)", required=True)
 parser.add_argument("-p", help="toplogy file i.e. PDB file with extension", required=True)
 parser.add_argument("-start", help="the starting frame (in ps) to begin the analysis. Default = 0 [ps]", default=0,
@@ -58,23 +93,14 @@ parser.add_argument("-f", help="the stride of analysis i.e. analyze every fth fr
 parser.add_argument("-single", help="a switch to turn on if the analysis is only for a single structure file",
     action="store_true", default=False)
 parser.add_argument("-name", help="name that you'd like to add to the analysis output files", default="")
-parser.add_argument("-timeseries", help="pass the flag to turn on plotting of oligomer data as a time series",
+parser.add_argument("-timeseries", help="pass the flag to turn on plotting of multimer data as a time series",
                     action="store_true", default=False)
-parser.add_argument("-distro", help="pass this flag to turn on plotting of average oligomer population, as a "
+parser.add_argument("-distro", help="pass this flag to turn on plotting of average multimer population, as a "
                                     "distribution", action="store_true", default=False)
 parser.add_argument("-verbose", help="pass this flag to output extra information to stdout.", action="store_true",
                     default=False)
 
 args = parser.parse_args()
-
-
-"""
-Stop the presses! This code will not be used any further! As of 2023 04 07
-"""
-print("This code is obsolete as of 2023 04 07! Exiting now to prevent further"
-    " use of it. Keeping for legacy purposes.")
-exit()
-
 
 trajectory= args.t
 topology = args.p
@@ -88,10 +114,18 @@ print("PLEASE BE ADVISED: This code automatically converts the information provi
       "data without doing the entire analysis all over again.")
 print("**********\n")
 
-""" Begin the timing procedure, added 20230221 """
+
+
+""" 
+Begin the timing procedure, added 20230221 
+"""
 time_start = time.perf_counter()
 
-# load the trajectory!
+
+
+"""
+Load the trajectory!
+"""
 if args.single:
     traj = md.load(trajectory, top=topology)
     args.f = 1
@@ -113,15 +147,23 @@ else:
     remaining_frames = traj_load.n_frames - frame_start
     analyzed_frames = remaining_frames / args.f
 
+
+
 """
 Useful global constants
 """
-A_CUTOFF = args.cutoff                 # in nanometers!
+CUTOFF = args.cutoff                 # in nanometers!
 NMODELS = args.nmodels
-MSIZE = args.l
+PSIZE = args.l
+MASS = args.mass
 
-INTERACTION_CUTOFF = 0.75       # unitless. This says that 75% of beads between any two coils need to be interacting
-                                # for there to be an oligomer
+if args.verbose:
+    print("Global constants used in analysis:")
+    print(f"Number of proteins (models): {NMODELS}")
+    print(f"Length of each protein: {PSIZE} beads")
+    print(f"Mass of each CG bead: {MASS} amu")
+    print(f"Cutoff length used to define a neighbor: {CUTOFF} nm")
+    print()
 
 
 
@@ -147,7 +189,19 @@ with open(args.df, "r") as file:
             pass
 
 print(f"Coil model file: {args.df}")
-print(f"Parsed coil positions (0-indexed): {Coil_positions_df}")
+print(f"Parsed coil positions for a single coil (0-indexed): {Coil_positions_df}")
+
+
+# Part of the sanity check ==> check that the size of each protein provided in the args
+# matches what is in the protein model file.
+prot_size = Coil_positions_df[-1][1]
+try:
+    (prot_size + 1) == PSIZE
+except:
+    print("The protein size (no. beads) does not match the size in the file. Exiting now!")
+    print(f"Provided protein size in args: {PSIZE}")
+    print(f"Protein size from model file: {prot_size + 1}")
+    exit(1)
 
 # Now, for each coil, generate the A- and D- position A-beads FOR THE FIRST MODEL ONLY. I need to enumerate all the
 # a-bead positions first before I can generate all the a-beads for all the models
@@ -170,7 +224,7 @@ for i in range(len(Coil_positions_df)):
     coil_i_beads.sort()
     Coil1_A_beads.append(coil_i_beads)
 
-print(f"Enumerated coil beads: {Coil1_A_beads}")
+print(f"Enumerated coil beads for the FIRST coil segment (0-indexed): {Coil1_A_beads}")
 print()
 
 # Now enumerate all the a-bead indices for each model present in the simulation. The variable MODELS_A_BEADS will have
@@ -179,9 +233,9 @@ MODELS_A_BEADS = []
 MODEL_RANGES = []
 for M in range(0, NMODELS):
     # This information stores the 0-INDEXED (!!!) ranges for each of the models in the system!
-    model_additive = M * MSIZE
-    model_start = 0 + (M * MSIZE)
-    model_end = MSIZE + (M * MSIZE)
+    model_additive = M * PSIZE
+    model_start = 0 + (M * PSIZE)
+    model_end = PSIZE + (M * PSIZE)
     MODEL_RANGES.append(range(model_start, model_end))
     # then I store the information about the coil a-bead indices (0-INDEXED!!)
     for c1i in Coil1_A_beads:       # select out each coil from Coil1 in Coil1_A_beads
@@ -192,8 +246,8 @@ for M in range(0, NMODELS):
         MODELS_A_BEADS.append(temp_abead_posits)
 
 if args.verbose:
-    print(f"All model coils a beads: {MODELS_A_BEADS}")
-    print(f"Model ranges {MODEL_RANGES}")
+    print(f"All model coils a beads (0-indexed): {MODELS_A_BEADS}")
+    print(f"Model ranges (0-indexed): {MODEL_RANGES}")
     print()
 # now we have all the index information we need to start doing the analysis
 
@@ -201,114 +255,92 @@ if args.verbose:
 """
 Step 2 - do the trajectory analysis now! I will do the analysis BY FRAME
 """
-# These are the TIME SERIES/Frame data for oligomers and self-vs-other interactions. Each entry will correspond to the
-# total of that category, in order of frames
-FREE_COILS = []         #
-DIMERS = []; TRIMERS = []; TETRAMERS = []; HIGHER = []
-SELF = []; OTHER = []
-
 """
 Here is a general overview of the analysis algorithm
-set master variables
-Iterate through every frame{
-    set the frame variables = 0
-    iterate through every coil in the system = coil1{
-        set the individual coil variables=0
-        iterate through every *other* coil in the system = coili{
-            calculate the neighbors between coil1 and coili
-            determine self vs other interactions
-            count interacting partners
-        }
-        determine what the oligomer is
-        add the coil variables to the frame variables
+set analysis variables
+Iterate through every frame {
+    - set the frame variables = 0
+    - calculate the COMs for all the coils based on new positions
+    - calculate distances between all COM points (all to all) using np.linalg.norm
+    iterate through the symmetric matrix to find neighbors {
+        (each array in the symmetric matrix corresponds to distances relative to a single coil)
+        * find neighbors/indices using (array < CUTOFF).nonzero()
+        * figure out what kind of multimer exists
+        * update frame variables
+        * store data about coils analyzed so I can skip those arrays and not double count
     }
-    add the frame variables to the master variables
-    *continue through analysis
+    - add frame variables to master variables
+    loop through again
 }
 """
+
+# Set ANALYSIS variables
+# These are the TIME SERIES/Frame data for multimers and self-vs-other interactions. 
+# Each entry will correspond to the total of that category, in order of frames
+FREE_COILS = []         #
+DIMERS = []; TRIMERS = []; TETRAMERS = []; 
+PENTAMERS = []; HEXAMERS = []; HIGHER = []
+SELF = []; OTHER = []
+
 # Begin the frame loop, analyze trajectory frame by frame
 for frame in range(0, traj.n_frames, args.f):
     free_coil_counter = 0
-    frame_dimer = 0; frame_trimer = 0; frame_tetramer = 0; frame_higherorder = 0
+    frame_dimer = 0; frame_trimer = 0; frame_tetramer = 0; 
+    frame_pentamer = 0; frame_hexamer = 0; frame_higherorder = 0
     frame_self = 0; frame_other = 0
+    
+    # Calculate the COMs for each of the coils for the given frame
+    coms = calc_COM(traj[frame], MODELS_A_BEADS, MASS)
 
-    # begin the primary loop through every coil and set variables
-    for ci in range(len(MODELS_A_BEADS)):
-#         print()
-#         print(f"Working on coil: {ci}")
-#         time_start_model_loop = time.perf_counter()
-        COIL_MODEL = 0
-        COIL = MODELS_A_BEADS[ci]
-        oligo_counter = 0
-        self_interact = 0
-        other_interact = 0
-        # determine which model I'm working with
-        for ri in range(len(MODEL_RANGES)):
-            if COIL[0] in MODEL_RANGES[ri]:
-                COIL_MODEL = ri
-            else:
-                pass
+    # now calculate the distance between ALL COMs
+    # this came from https://stackoverflow.com/questions/46700326/calculate-distances-between-one-point-in-matrix-from-all-other-points
+    # the first answer on the page
+    dists = np.linalg.norm(coms - coms[:, None], axis=-1)
 
-        # now loop through every other coil and see if COIL is neighbors with it
-        
-        for ci2 in range(len(MODELS_A_BEADS)):
-#             print(f"Counting neighbors with: {ci2}")
-#             time_start_neighbor = time.perf_counter()
-            if ci2 == ci:   # don't analyze current coil, duh
-                continue
-            else:
-                COILi = MODELS_A_BEADS[ci2]
-                # now find the neighbors!
-                neighbors = md.compute_neighbors(traj[frame], A_CUTOFF, COIL, haystack_indices=COILi)[0]
-
-                if len(neighbors) < np.floor(len(COIL) * INTERACTION_CUTOFF):
-                    # no neighbors OR not sufficient coil interactions between COIL and COILi, so no oligomer
-                    continue
-                else:
-                    # we have a bona fide oligomer, add it to the list
-                    oligo_counter += 1
-
-                    for ri in range(len(MODEL_RANGES)):
-                        if neighbors[0] in MODEL_RANGES[ri]:    # only need to look at first entry
-                            if ri == COIL_MODEL:
-                                self_interact += 1
-                            else:
-                                other_interact += 1
-#             time_end_neighbor = time.perf_counter()
-#             elapsed_neighbor = (time_end_neighbor - time_start_neighbor) / 60.
-#             print(f"Time to calculate neighbors between coil i and coil j: {elapsed_neighbor:.4f} min")
-
-#         time_end_model_loop = time.perf_counter()
-#         elapsed_model_loop = (time_end_model_loop - time_start_model_loop) / 60.
-#         print(f"Time to calculate all neighbors with coil i: {elapsed_model_loop:.4f} min")
-
-        # now we're done checking if COIL has neighbors with any other coil in the system
-        if oligo_counter == 0:      # no interactions, free-floating coil
+    # Loop through every coil and filter based on distances to find neighbors, the type of
+    # multimer that is formed, and the indices of neighbors
+    # I will also tally all the coils that are included in a multimer so that I don't 
+    # double count anything
+    # find the multimers, add them to the frame counters, then move onto the next frame
+    excluded_coils = []
+    for coili, coilD in enumerate(dists):
+        if coili in excluded_coils:
+            continue
+        neighbors = (coilD <= CUTOFF).nonzero()[0]    # this contains the indices of other coils
+                # that are neighbors, out of the total number of coils in the simulation
+        multimer_size = len(neighbors)
+        if multimer_size == 1:
             free_coil_counter += 1
-        elif oligo_counter == 1:
+        elif multimer_size == 2:
             frame_dimer += 1
-            frame_self += self_interact /2
-            frame_other += other_interact /2
-        elif oligo_counter == 2:
+        elif multimer_size == 3:
             frame_trimer += 1
-            frame_self += self_interact / 2
-            frame_other += other_interact / 2
-        elif oligo_counter == 3:
+        elif multimer_size == 4:
             frame_tetramer += 1
-            frame_self += self_interact / 2
-            frame_other += other_interact / 2
+        elif multimer_size == 5:
+            frame_pentamer += 1
+        elif multimer_size == 6:
+            frame_hexamer += 1
         else:
             frame_higherorder += 1
-
-    # now we're done with every single coil analysis for the given frame. Add the running totals to the lists
+        
+        for indices in neighbors:
+            excluded_coils.append(indices)
+        
+    # Now add the frame values to the ANALYSIS variables and move onto the next frame
+    # This CANNOT be a running total and instead there needs to be an entry for every 
+    # frame analyzed
     FREE_COILS.append(free_coil_counter)
-    DIMERS.append(frame_dimer/2)
-    TRIMERS.append(frame_trimer/3)
-    TETRAMERS.append(frame_tetramer/4)
-    # these four arrays above contain the number of each oligomers throughout time.
+    DIMERS.append(frame_dimer)
+    TRIMERS.append(frame_trimer)
+    TETRAMERS.append(frame_tetramer)
+    PENTAMERS.append(frame_pentamer)
+    HEXAMERS.append(frame_hexamer)
     HIGHER.append(frame_higherorder)
     SELF.append(frame_self)
     OTHER.append(frame_other)
+
+
     
 """ End the timing work. This is because the majority of the time will happen above with the 
 actual calculation of the haystack """
@@ -316,9 +348,8 @@ time_stop = time.perf_counter()
 elapsed_time = ((time_stop - time_start) / 60) / 60 
 # this reports the elapsed time in terms of hours
 print("-----------------------------")
-print(f"Elapsed time for the analysis fo haystack searching: {elapsed_time:.4f} hours")
+print(f"Elapsed time for the analysis fo neighbor searching and multimer analysis: {elapsed_time:.4f} hours")
 print("-----------------------------")
-
 
 # Handle the plotting of important information
 if args.distro:
@@ -345,7 +376,7 @@ if args.distro:
     plt.xlabel("N-mer")
     plt.ylabel("Counts")
     plt.grid(color="black", linestyle=":", alpha=0.5)
-    plt.savefig(f"{args.name}_oligomeric_analysis_distribution.png", dpi=600)
+    plt.savefig(f"{args.name}_multimeric_analysis_distribution.png", dpi=600)
 
 if args.single:
     arFrames = np.array([0])
@@ -367,39 +398,43 @@ if args.timeseries:
     plt.grid(alpha=0.5)
     plt.ylabel("Counts")
     plt.xlabel("Simulation time (ps)")
-    plt.savefig(f"{args.name}_oligomeric_analysis_timeseries.png", dpi=600)
+    plt.savefig(f"{args.name}_multimeric_analysis_timeseries.png", dpi=600)
     plt.close()
 
-    fig, ax = plt.subplots()
-    ax.plot(arFrames, np.array(SELF), color="black", label = "Intra-model interactions",
-              linewidth=1)
-    ax.plot(arFrames, np.array(OTHER), color="blue", label = "Inter-model interactions",
-             linewidth=1)
-    plt.legend()
-    plt.grid(alpha=0.5)
-    plt.ylabel("Counts")
-    plt.xlabel("Simulation time (ps)")
-    plt.savefig(f"{args.name}_selfvsother_analysis.png", dpi=600)
-    plt.close()
+# as of 2023 04 07 -- analysis of self to other coils is not included in the analysis
+#     fig, ax = plt.subplots()
+#     ax.plot(arFrames, np.array(SELF), color="black", label = "Intra-model interactions",
+#               linewidth=1)
+#     ax.plot(arFrames, np.array(OTHER), color="blue", label = "Inter-model interactions",
+#              linewidth=1)
+#     plt.legend()
+#     plt.grid(alpha=0.5)
+#     plt.ylabel("Counts")
+#     plt.xlabel("Simulation time (ps)")
+#     plt.savefig(f"{args.name}_selfvsother_analysis.png", dpi=600)
+#     plt.close()
 
 
 # Now save out all the data so I can use it later:
-outputdata = [arFrames, np.array(FREE_COILS), np.array(DIMERS), np.array(TRIMERS), np.array(TETRAMERS),
-              np.array(HIGHER), np.array(SELF), np.array(OTHER)]
-pd.DataFrame(np.array(outputdata)).to_csv(f"{args.name}_oligoAnalysis_outData.csv")
+outputdata = [arFrames, np.array(FREE_COILS), np.array(DIMERS), 
+    np.array(TRIMERS), np.array(TETRAMERS), np.array(PENTAMERS),
+    np.array(HEXAMERS), np.array(HIGHER), 
+    np.array(SELF), np.array(OTHER)]
+pd.DataFrame(np.array(outputdata)).to_csv(f"{args.name}_multimerAnalysis_outData.csv", header=False)
 
 print(f"Number of frames in trajectory after slicing from the starting point: {remaining_frames}")
 print(f"The total number of analyzed frames, based on the '-f' argument: {analyzed_frames}")
 if args.verbose:
     print("""
 The output file is organized by rows, as follows:
-Row blank - column entries
 Row 0 - time (ps)
 Row 1 - Number of monomers
 Row 2 - Number of dimers
 Row 3 - Number of trimers
 Row 4 - Number of tetramers
-Row 5 - Number of higher order species
-Row 6 - Number of self-protein interactions
-Row 7 - Number of other-protein interactions
+Row 5 - Number of pentamers
+Row 6 - Number of hexamers
+Row 7 - Number of higher order species
+Row 8 - Number of self-protein interactions (not counted as of 2023 04 07)
+Row 9 - Number of other-protein interactions (not counted as of 2023 04 07)
 """)
