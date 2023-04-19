@@ -365,18 +365,30 @@ if args.distro:
     tet_average = np.average(TETRAMERS); tet_std = np.std(TETRAMERS)
     norm_tet = (tet_average * 4.) / float(args.N)
     norm_tet_std = (tet_std * 4.) / float(args.N)
+    pent_average = np.average(PENTAMERS); pent_std = np.std(PENTAMERS)
+    norm_pent = (pent_average * 5.) / float(args.N)
+    norm_pent_std = (pent_std * 5.) / float(args.N)
+    hex_average = np.average(HEXAMERS); hex_std = np.std(HEXAMERS)
+    norm_hex = (hex_average * 6.) / float(args.N)
+    norm_hex_std = (hex_std * 6.) / float(args.N)
 
     fig, ax = plt.subplots()
-    ax.errorbar([1, 2, 3, 4], [norm_free, norm_dimer, norm_trimer, norm_tet],
-             yerr=[norm_free_std, norm_dimer_std, norm_trimer_std, norm_tet_std], color="black", linestyle="",
-             markersize=10, marker=".", ecolor="black", elinewidth=1, capsize=5)
-    plt.xticks(np.arange(0, 6))
-    plt.xlim(0, 5)
+    ax.errorbar([1, 2, 3, 4, 5, 6], 
+        [norm_free, norm_dimer, norm_trimer, norm_tet, norm_pent, norm_hex],
+        yerr=[norm_free_std, norm_dimer_std, norm_trimer_std, norm_tet_std, norm_pent_std, norm_hex_std], 
+        color="black", linestyle="",
+        markersize=10, marker=".", ecolor="black", elinewidth=1, capsize=5)
+    plt.xticks(np.arange(0, 7))
+    plt.xlim(0, 6)
     plt.ylim(0, 1)
     plt.xlabel("N-mer")
     plt.ylabel("Counts")
     plt.grid(color="black", linestyle=":", alpha=0.5)
     plt.savefig(f"{args.name}_multimeric_analysis_distribution.png", dpi=600)
+
+if args.verbose:
+    print(f"Sum of normalized coil counts across multimers (should equal 1):"
+        f" {np.sum(np.array([norm_free, norm_dimer, norm_trimer, norm_tet, norm_pent, norm_hex])):.4f}")
 
 if args.single:
     arFrames = np.array([0])
@@ -384,21 +396,26 @@ else:
     arFrames = np.arange(0+args.start, (traj.n_frames*traj.timestep)+args.start, (args.f*traj.timestep))
 if args.timeseries:
     fig, ax = plt.subplots()
-    ax.plot(arFrames, np.array(FREE_COILS), color="black", label = "Free coils",
+    ax.plot(arFrames, np.array(FREE_COILS), color="blue", label = "Free coils",
               linewidth=1)
-    ax.plot(arFrames, np.array(DIMERS), color="blue", label = "Dimers",
+    ax.plot(arFrames, np.array(DIMERS), color="slategrey", label = "Dimers",
              linewidth=1)
-    ax.plot(arFrames, np.array(TRIMERS), color="red", label = "Trimers",
+    ax.plot(arFrames, np.array(TRIMERS), color="darkorange", label = "Trimers",
              linewidth=1)
-    ax.plot(arFrames, np.array(TETRAMERS), color="tab:orange", label = "Tetramers",
+    ax.plot(arFrames, np.array(TETRAMERS), color="blueviolet", label = "Tetramers",
               linewidth=1)
-    ax.plot(arFrames, np.array(HIGHER), color="tab:green", label = "Higher order oligos*",
+    ax.plot(arFrames, np.array(PENTAMERS), color="seagreen", label = "Pentamers",
               linewidth=1)
-    plt.legend()
+    ax.plot(arFrames, np.array(TETRAMERS), color="goldenrod", label = "Hexamers",
+              linewidth=1)
+    ax.plot(arFrames, np.array(HIGHER), color="red", label = "Higher order oligos*",
+              linewidth=1)
+    plt.legend(loc="center left", bbox_to_anchor=(1.01, 0.5))
     plt.grid(alpha=0.5)
     plt.ylabel("Counts")
     plt.xlabel("Simulation time (ps)")
     plt.savefig(f"{args.name}_multimeric_analysis_timeseries.png", dpi=600)
+    plt.tight_layout()
     plt.close()
 
 # as of 2023 04 07 -- analysis of self to other coils is not included in the analysis
