@@ -417,8 +417,8 @@ if args.timeseries:
     plt.grid(alpha=0.5)
     plt.ylabel("Counts")
     plt.xlabel("Simulation time (ps)")
-    plt.savefig(f"{args.name}_multimeric_analysis_timeseries.png", dpi=600)
     plt.tight_layout()
+    plt.savefig(f"{args.name}_multimeric_analysis_timeseries.png", dpi=600)
     plt.close()
 
 # as of 2023 04 07 -- analysis of self to other coils is not included in the analysis
