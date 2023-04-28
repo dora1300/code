@@ -117,7 +117,7 @@ print("PLEASE BE ADVISED: This code automatically converts the information provi
       "positions! Your input is 1-indexed, but this code will automatically change it to 0-indexed."
       " "
       "Also note that this code only needs to run once, since it outputs the data and then you can modify plots of that"
-      "data without doing the entire analysis all over again.")
+      " data without doing the entire analysis all over again.")
 print("**********\n")
 
 
@@ -326,8 +326,9 @@ for frame in range(0, traj.n_frames, args.f):
         multimer_size = len(neighbors)
 
         if args.save:
-            np.savetxt(outputFile, neighbors, delimiter=" ", fmt="%i", newline=" ")
-            outputFile.write(" ")
+            if multimer_size > 1:
+                np.savetxt(outputFile, neighbors, delimiter=" ", fmt="%i", newline=" ")
+                outputFile.write(" ")
 
         if multimer_size == 1:
             free_coil_counter += 1
