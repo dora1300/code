@@ -421,7 +421,7 @@ if args.single:
 else:
     arFrames = np.arange(0+args.start, (traj.n_frames*traj.timestep)+args.start, (args.f*traj.timestep))
 if args.timeseries:
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(10,5))
     ax.plot(arFrames, np.array(FREE_COILS), color="blue", label = "Free coils",
               linewidth=1)
     ax.plot(arFrames, np.array(DIMERS), color="slategrey", label = "Dimers",
