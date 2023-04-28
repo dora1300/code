@@ -25,7 +25,9 @@ This script will first be written to handle only homomeric simulations of models
 heteromeric simulations.
 
 @Updates:
-
+2023 04 28 -- added a new feature to save the contacts in every analyzed frame. This will output the indices of coils
+that are determined to be interacting, and save them to a .txt file. For a typical 10 us simulation, with every single
+frame analyzed, the expected output file is somewhere around 10-20 MB, which isn't terrible.
 """
 
 import mdtraj as md
@@ -92,13 +94,17 @@ parser.add_argument("-start", help="the starting frame (in ps) to begin the anal
 parser.add_argument("-f", help="the stride of analysis i.e. analyze every fth frame, default = 1", default=1, type=int)
 parser.add_argument("-single", help="a switch to turn on if the analysis is only for a single structure file",
     action="store_true", default=False)
-parser.add_argument("-name", help="name that you'd like to add to the analysis output files", default="")
+parser.add_argument("-name", help="name that you'd like to add to the analysis output files",
+                    default="multimerAnalysis")
 parser.add_argument("-timeseries", help="pass the flag to turn on plotting of multimer data as a time series",
                     action="store_true", default=False)
 parser.add_argument("-distro", help="pass this flag to turn on plotting of average multimer population, as a "
                                     "distribution", action="store_true", default=False)
 parser.add_argument("-verbose", help="pass this flag to output extra information to stdout.", action="store_true",
                     default=False)
+parser.add_argument("-save", help="pass this flag to save the 'contact map', which is just a list of coil indices"
+                                  "of every multimer, in every analyzed frame. Output file is .txt.",
+                    action="store_true", default=False)
 
 args = parser.parse_args()
 
@@ -109,7 +115,7 @@ topology = args.p
 print("**********")
 print("PLEASE BE ADVISED: This code automatically converts the information provided in the -df file into 0-INDEXED "
       "positions! Your input is 1-indexed, but this code will automatically change it to 0-indexed."
-      ""
+      " "
       "Also note that this code only needs to run once, since it outputs the data and then you can modify plots of that"
       "data without doing the entire analysis all over again.")
 print("**********\n")
@@ -274,11 +280,20 @@ Iterate through every frame {
 }
 """
 
+if args.save:
+    output_file_name = f"{args.name}_contacts.txt"
+    # open and turn on the output file. BUT check to make sure the file doesn't already exist because this
+    # method only works by appending.
+    if os.path.isfile(f"./{output_file_name}"):
+        raise FileExistsError("Desired contact output file already exists. Exiting now to prevent overwriting!")
+    else:
+        outputFile = open(output_file_name, 'a')
+
 # Set ANALYSIS variables
 # These are the TIME SERIES/Frame data for multimers and self-vs-other interactions. 
 # Each entry will correspond to the total of that category, in order of frames
 FREE_COILS = []         #
-DIMERS = []; TRIMERS = []; TETRAMERS = []; 
+DIMERS = []; TRIMERS = []; TETRAMERS = []
 PENTAMERS = []; HEXAMERS = []; HIGHER = []
 SELF = []; OTHER = []
 
@@ -309,6 +324,11 @@ for frame in range(0, traj.n_frames, args.f):
         neighbors = (coilD <= CUTOFF).nonzero()[0]    # this contains the indices of other coils
                 # that are neighbors, out of the total number of coils in the simulation
         multimer_size = len(neighbors)
+
+        if args.save:
+            np.savetxt(outputFile, neighbors, delimiter=" ", fmt="%i", newline=" ")
+            outputFile.write(" ")
+
         if multimer_size == 1:
             free_coil_counter += 1
         elif multimer_size == 2:
@@ -326,7 +346,9 @@ for frame in range(0, traj.n_frames, args.f):
         
         for indices in neighbors:
             excluded_coils.append(indices)
-        
+
+    if args.save:
+        outputFile.write("\n")
     # Now add the frame values to the ANALYSIS variables and move onto the next frame
     # This CANNOT be a running total and instead there needs to be an entry for every 
     # frame analyzed
@@ -340,7 +362,8 @@ for frame in range(0, traj.n_frames, args.f):
     SELF.append(frame_self)
     OTHER.append(frame_other)
 
-
+if args.save:
+    outputFile.close()
     
 """ End the timing work. This is because the majority of the time will happen above with the 
 actual calculation of the haystack """
@@ -458,3 +481,8 @@ Row 7 - Number of higher order species
 Row 8 - Number of self-protein interactions (not counted as of 2023 04 07)
 Row 9 - Number of other-protein interactions (not counted as of 2023 04 07)
 """)
+if args.save:
+    print("You have elected to save out the list of coil contacts in found multimers, which saves the indices of all"
+          " interacting coils (0-indexed) to an output file. Each line in the file corresponds to the contacts found"
+          " in a given frame, and each pair/grouping of contacts is separated by a double space. Use this fact to"
+          " parse the output file for further analysis.")
