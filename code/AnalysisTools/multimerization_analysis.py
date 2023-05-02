@@ -89,8 +89,9 @@ parser.add_argument("-cutoff", help="The cut-off distance used to determine if t
                                     "an multimer. [nm]", default=1.3, type=float)
 parser.add_argument("-t", help="trajectory file with extension (.xtc)", required=True)
 parser.add_argument("-p", help="toplogy file i.e. PDB file with extension", required=True)
-parser.add_argument("-start", help="the starting frame (in ps) to begin the analysis. Default = 0 [ps]", default=0,
+parser.add_argument("-start", help="the start TIME [ps] to begin the analysis. Default = 0 [ps]", default=0,
                     type=int)
+parser.add_argument("-stop", help="the stop TIME [ps] to end the analysis. Default is the entire simulation", type=int)
 parser.add_argument("-f", help="the stride of analysis i.e. analyze every fth frame, default = 1", default=1, type=int)
 parser.add_argument("-single", help="a switch to turn on if the analysis is only for a single structure file",
     action="store_true", default=False)
@@ -149,7 +150,16 @@ else:
             break
         else:
             frame_start += 1
-    traj = traj_load[frame_start::]
+    frame_end = 0
+    while frame_end <= traj_load.nframes:
+        if int(frame_end * traj_load.timestep) >= args.stop:
+            break
+        else:
+            frame_end += 1
+    if frame_end < frame_start:
+        raise ValueError("The specified end point is before the start point! Exiting because this doesn't make sense")
+        exit(1)
+    traj = traj_load[frame_start:frame_end:]
     remaining_frames = traj_load.n_frames - frame_start
     analyzed_frames = remaining_frames / args.f
 
