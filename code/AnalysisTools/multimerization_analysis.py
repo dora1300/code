@@ -151,11 +151,14 @@ else:
         else:
             frame_start += 1
     frame_end = 0
-    while frame_end <= traj_load.n_frames:
-        if int(frame_end * traj_load.timestep) >= args.stop:
-            break
-        else:
-            frame_end += 1
+    if args.stop is None:
+        frame_end = traj_load.n_frames
+    else:
+        while frame_end <= traj_load.n_frames:
+            if int(frame_end * traj_load.timestep) >= args.stop:
+                break
+            else:
+                frame_end += 1
     if frame_end < frame_start:
         raise ValueError("The specified end point is before the start point! Exiting because this doesn't make sense")
         exit(1)
