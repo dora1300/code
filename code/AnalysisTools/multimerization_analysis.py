@@ -151,7 +151,7 @@ else:
         else:
             frame_start += 1
     frame_end = 0
-    while frame_end <= traj_load.nframes:
+    while frame_end <= traj_load.n_frames:
         if int(frame_end * traj_load.timestep) >= args.stop:
             break
         else:
