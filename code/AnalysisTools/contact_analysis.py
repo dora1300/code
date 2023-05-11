@@ -53,7 +53,12 @@ RESULTS = args.data
 
 total_partners_array = np.empty((NCOILS,), dtype=object)
     # this will become an array of lists. Each entry array[i] corresponds to a unique coil (0..n..NCOILS). The entry
-    # is a list of ALL the partners that coil_n sees throughout the simulation. Thus, this includes repeats
+    # is a list of ALL the partners that coil_n sees throughout the simulation.
+    # THIS MEANS THE AMOUNT OF ENTRIES IN EACH ARRAY IS NOT THE SAME AS THE NUMBER OF FRAMES ANALYZED
+    # for larger multimers, each coil will have MULTIPLE partners per frame. This data may or may not be useful
+time_in_multimer_array = np.zeros((NCOILS,), dtype=object)
+    # this is an array of length NCOILS, where every entry arr[i] = the amount of time that the given coil_i is
+    # in a multimer. This means that the len(arr[i]) <= Number of frames or len(interactions_by_frame) NECESSARILY!!
 unique_partners_array = np.empty((NCOILS,), dtype=object)
     # this will become an array of lists. Each entry array[i] corresponds to a unique coil (0..n..NCOILS).
     # Each entry is a list of UNIQUE partners that coil_n sees throughout the simulation. Thus, no repeats
@@ -129,6 +134,7 @@ with open(RESULTS, 'r') as f:
             # but I HAVE to duplicate it here so that I correctly count all interactions
             # for ALL coils
             for coili in range(len(indices)):
+                time_in_multimer_array[indices[coili]] += 1
                 coilj = 0
                 while coilj < len(indices):
                     if coili == coilj:
@@ -198,7 +204,6 @@ print(f"Elapsed time for reading: {elapsed_time:.4f} minutes")
 print("-----------------------------")
 
 
-
 plt.rcParams['font.size'] = 14
 """
 Do some analysis of the LIFETIME data, and save a plot. Also, save out the list of lifetimes in case
@@ -238,35 +243,46 @@ pd.DataFrame(multimer_lifetimes * FRAME_TIME).to_csv(f"{args.output}_multimerLif
 Total interactions throughout the simulation for each coil.
 This is plotted as percentage of simulation time that a coil is engaged in an interaction
 Keep in mind that the "interactions_by_frame" data is identical to the multimer data that I get from the other script
+
+Updated 2023 05 11 -- the code is fixed to use time_in_multimer_array data, which is correct for percentage
+simulation time that a coil is in an interaction
 """
 percentage_time_coil_interactions = []
-for i, coil in enumerate(total_partners_array):
-    # coil is the total number of partners for coil_i throughout the simulation. Thus, there can be no more than
+for i, coil in enumerate(time_in_multimer_array):
+    # coil is the number of frames coil_i is in a multimer in the simulation. Thus, there can be no more than
     # len(interactions_by_frame) partners for coil_i. len(interactions_by_frame) is just how many frames that were
     # analyzed
-    percentage_time_coil_interactions.append(len(coil) / len(interactions_by_frame) * 100)
+    percentage_time_coil_interactions.append(coil / len(interactions_by_frame) * 100)
 
 avg_interactions = np.sum(interactions_by_frame) / len(interactions_by_frame)
-print(f"Avg interactions by frame: {avg_interactions}")
+print(f"Avg NUMBER of interactions by frame: {avg_interactions}")
 avg_percentage_interactions = np.average(percentage_time_coil_interactions)
+print(f"Avg percentage of time a coil is in a multimer (for all frames): {avg_percentage_interactions}")
 
 fig, ax = plt.subplots(figsize=(7, 5))
 ax.plot(np.arange(0, NCOILS), percentage_time_coil_interactions, color="grey", linewidth=1.25)
 plt.hlines(y=avg_percentage_interactions, xmin=0, xmax=NCOILS+5, color="goldenrod",
            label=f"Average percentage \ninteractions: {avg_percentage_interactions:.4f}")
 plt.xlim(0, NCOILS + 1)
-plt.ylim(0, 100)
+plt.ylim(0, 105)
 plt.xlabel("Coil number")
 plt.ylabel("Percentage of simulation time")
 plt.title("Time that each coil is in a multimer")
 plt.grid(linestyle=":", color="black", alpha=0.35)
 plt.legend()
 plt.tight_layout()
-plt.savefig(f"{args.output}_totalInteractions_byCoil.png", dpi=600)
+plt.savefig(f"{args.output}_percentageTimeInMultimer_byCoil.png", dpi=600)
 plt.close()
 
-pd.DataFrame(percentage_time_coil_interactions).to_csv(f"{args.output}_fractionCoilInteractions_byCoil.csv",
+pd.DataFrame(percentage_time_coil_interactions).to_csv(f"{args.output}_percentageCoilInteractions_byCoil.csv",
                                                        header=["Percentage of time in multimer"])
+
+# Just for shits and giggles I'll write out the total number of partners that a coil sees. Maybe it's useful, maybe not
+total_summed_partners_array = []
+for i, coil in enumerate(total_partners_array):
+    total_summed_partners_array.append(np.sum(coil))
+pd.DataFrame(total_summed_partners_array).to_csv(f"{args.output}_totalNumberPartners_byCoil.csv",
+                                                       header=["Total number of partners throughout simulation"])
 
 """
 This calculates the unique partners that each coil sees throughout the simulation.
