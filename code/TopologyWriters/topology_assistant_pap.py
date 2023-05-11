@@ -18,7 +18,9 @@ is handled at the .top [nonbond_params] level.
 As of 20221028 the topology writer is not updated so I strongly recommend against using it! Just make your own .top
 file for now!
 
-
+@Updates:
+2023 05 10 -- I'm removing the topology writing feature since it isn't working properly. I might add that back
+at some point. For now, make your own .top topology file.
 """
 
 import argparse
@@ -55,54 +57,6 @@ ALPHA3_LINK_FORCE = 20 * DAMP
 
 
 """ Function Definitions """
-def write_topology(top_filename, aa_c6, aa_c12):
-    """
-    This writes the .top file for a coil model.
-    :param top_filename: the user provided filename for the topology
-    :param aa_c6: the value of the attractive part of the A-A vdW interaction
-    :param aa_c12: the value of the repulsive part of the A-A vdW interaction
-    :return: None (this just saves the file)
-    """
-    #output = open(top_filename, 'w')
-    top = f"""; Topology file for a coil model
-; Includes .itp files, which are set manually
-; updated to include new VdW parameter format
-; Also includes updated B-B repulsion interaction set at 2kJ/mol
-; but only for the nonbond_param
-
-[ defaults ]
-; nbfunc        comb-rule       gen-pairs       fudgeLJ fudgeQQ
-1               1               yes              1.0     0
-
-[ atomtypes ]
-;name  mass     charge   ptype  V(C6, attra)  W(C12, repul)
- A     109.0    0.000   A        6.9132E-03    5.97404E-05
- B     109.0    0.000   A        0             5.97404E-05
-
-[ nonbond_params ]
-;i     j   func    V(C6, attra)    W(C12, repul)
- A     A   1        {aa_c6}          {aa_c12}
- A     B   1        0                5.97404E-04
- B     B   1        0                5.97404E-04
-
-; Include the individual .itps for different molecules
-; This is set MANUALLY - DONT FORGET!
-#include
-
-[ system ]
-; Name
-Coil-model-simulation
-
-[ molecules ]
-;moleculetype-name    # molecules
-; fill in manually here
-"""
-    #output.write(top)
-    #output.close()
-    print("Update 20230124 - Topology (.top) maker is not working appropriately for this model. I will address this"
-          " later. For now, it will not save any file and will not work. Please make your own topology file by hand.")
-    return None
-
 def write_itp(itp_filename, Length, segments_list, positions_list):
     """
 
@@ -590,13 +544,6 @@ if __name__ == "__main__":
     parser.add_argument("-df", help="Definition file: this contains the information on how to build the model, with"
                                     " alternating coil and linker segments.")
     parser.add_argument("-n", help="The number of beads in the coil model.", type=int, required=True)
-    parser.add_argument("-top", help="Activate to turn on .top file writer.", action="store_true")
-    parser.add_argument("-top_filename", help="File name for the .top file. Please provide extension.",
-                        default="top.top", type=str)
-    parser.add_argument("-aaAttract", help="The C6 attractive value for A-A bead interactions. Value is handled "
-                                          "as string", type=str)
-    parser.add_argument("-aaRepul", help="The C12 repulsive value for A-A bead interactions. Value is handled "
-                                          "as string", type=str)
     parser.add_argument("-itp", help="Activate to turn on .itp file writer.",
                         action="store_true")
     parser.add_argument("-itp_filename", help="File name for the .itp file. Please provide extension.")
@@ -627,11 +574,5 @@ if __name__ == "__main__":
             else:
                 Positions.append([int(line_split[1]), int(line_split[2])])
 
-    if args.top:
-        if args.aaAttract is None or args.aaRepul is None:
-            print("A-A interaction energies are not provided. Please do so. Exiting now.")
-            exit(1)
-        else:
-            write_topology(args.top_filename, args.aaAttract, args.aaRepul)
     if args.itp:
         write_itp(args.itp_filename, args.n, Segments, Positions)
