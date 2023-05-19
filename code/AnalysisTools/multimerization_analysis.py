@@ -446,7 +446,7 @@ if args.timeseries:
               linewidth=1)
     ax.plot(arFrames, np.array(PENTAMERS), color="seagreen", label = "Pentamers",
               linewidth=1)
-    ax.plot(arFrames, np.array(TETRAMERS), color="goldenrod", label = "Hexamers",
+    ax.plot(arFrames, np.array(HEXAMERS), color="goldenrod", label = "Hexamers",
               linewidth=1)
     ax.plot(arFrames, np.array(HIGHER), color="red", label = "Higher order oligos*",
               linewidth=1)
