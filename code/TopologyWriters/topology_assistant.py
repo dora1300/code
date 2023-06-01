@@ -1,10 +1,10 @@
 """
-@Title:             topology_assistant_nonspecific_modularModel.py
+@Title:             topology_assistant.py
 @Name:              Mando A Ramirez
 @Date:              2022 10 28
 
-@Description:       This script is an extension of "topology_assistant_nonspecific.py" to handle the modular oligomer
-models that are described in DAR3-36b. This allows me to specify oligomerization state for the coils.
+@Description:       This script is an extension of "topology_assistant_nonspecific.py" to handle the modular multimer
+proteins that are described in DAR3-36b. This allows me to specify oligomerization state for the coils.
 
 This code goes back and forth between using 1 indexing and 0 indexing, which ever is most convenient for the application.
 Be mindful of this! I will try to denote what indexing is being used.
@@ -22,12 +22,14 @@ print the correct type of oligo bead based on the specified oligomer type.
 
 2023 05 10 -- I'm removing the .top topology writing feature since I don't use it. It might get added back at some
 point.
+
+2023 06 01 -- updated to actually correctly handle comments (which needs decoding if file comes from Excel).
 """
 
 import argparse
 
 """ Constants """
-# Since I have now found parameters to use in the model, I will make those parameters constant
+# Since I have now found parameters to use in the framework, I will make those parameters constant
 DAMP = 0.01                         # From DAR3-25p, used for damping linker parameters
 
 MASS = 109.0
@@ -76,10 +78,10 @@ def write_itp(itp_filename, Length, segments_list, positions_list):
     EG_BEADS_BY_COIL = []
 
     opener = f""";
-; Individual topology file (.itp) for a coil model
+; Individual topology file (.itp) for a CC protein
 ; Title: {itp_filename}
-; Using the oligomeric modular model scheme
-; This file is generated automatically by "toplogy_assistant_nonspecific_modularModel.py"
+; Using the modular multimer scheme
+; This file is generated automatically by "toplogy_assistant.py"
 ; This file MUST BE MANUALLY INCLUDED IN THE OVERALL .top FILE!
 ;
 
@@ -533,11 +535,11 @@ if __name__ == "__main__":
     # name==main style is a little overkill, but I'm including it here for good pythonic practice
 
     # Set up the argument parser!
-    parser = argparse.ArgumentParser(description="Topology Writer Tool -- Use this to make topology files for coil "
-                                                 "models, easy as pie! Cheap as Ubik, too!")
-    parser.add_argument("-df", help="Definition file: this contains the information on how to build the model, with"
+    parser = argparse.ArgumentParser(description="Topology Writer Tool -- Use this to make topology files for CC "
+                                                 "proteins, easy as pie! Cheap as Ubik, too!")
+    parser.add_argument("-df", help="Design file: this contains the information on how to build the protein, with"
                                     " alternating coil and linker segments.")
-    parser.add_argument("-n", help="The number of beads in the coil model.", type=int, required=True)
+    parser.add_argument("-n", help="The number of beads in the CC protein.", type=int, required=True)
     parser.add_argument("-itp", help="Activate to turn on .itp file writer.",
                         action="store_true")
     parser.add_argument("-itp_filename", help="File name for the .itp file. Please provide extension.")
@@ -550,19 +552,19 @@ if __name__ == "__main__":
     # Positions contains the start/stop (and heptad) indices for the segments that correspond to the same index in the
     # Segments list
     Segments = []; Positions = []
-    with open(args.df, "r") as file:
+    with open(args.df, "r", encoding="utf-8-sig") as file:
         for line in file:
-            line_split = line.rstrip("\n").split(",")
-            if str(line_split[0][0]) == "#":
-                # I am now adding in comment support. Comments can exist in the model generation file and can be denoted
+            if line[0] == "#":
+                # I am now adding in comment support. Comments can exist in the design file and can be denoted
                 # as "#"
                 continue
-
-            Segments.append(str(line_split[0]))
-            if str(line_split[0]) == "coil":   # uses 0-indexing, this now handles the final column being oligo type
-                Positions.append([int(line_split[1]), int(line_split[2]), int(line_split[3]),
-                                  str(line_split[4]), line_split[5]]) # notice that index 5 has no type command!!!
             else:
-                Positions.append([int(line_split[1]), int(line_split[2])])
+                line_split = line.rstrip("\n").split(",")
+                Segments.append(str(line_split[0]))
+                if str(line_split[0]) == "coil":   # uses 0-indexing, this now handles the final column being oligo type
+                    Positions.append([int(line_split[1]), int(line_split[2]), int(line_split[3]),
+                                    str(line_split[4]), line_split[5]]) # notice that index 5 has no type command!!!
+                else:
+                    Positions.append([int(line_split[1]), int(line_split[2])])
     if args.itp:
         write_itp(args.itp_filename, args.n, Segments, Positions)

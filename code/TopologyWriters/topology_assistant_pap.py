@@ -1,13 +1,13 @@
 """
-@Title:             topology_assistant_pap_model.py
+@Title:             topology_assistant_pap.py
 @Name:              Mando A Ramirez
 @Date:              2023 01 24
 
 @Description:       This script is an extension of other topology writers but this time I get to explicitly handle
-parallel and antiparallel coil models. This is designed in particular for the Marusa collaboration but can be used for
+parallel and antiparallel coil proteins. This is designed in particular for the Marusa collaboration but can be used for
 other applications as well.
 
-This uses a slightly modified version of the model input file comapred to the other topology makers.
+This uses a slightly modified version of the protein input file compared to the other topology makers.
 
 This code goes back and forth between using 1 indexing and 0 indexing, which ever is most convenient for the application.
 Be mindful of this! I will try to denote what indexing is being used.
@@ -26,7 +26,7 @@ at some point. For now, make your own .top topology file.
 import argparse
 
 """ Constants """
-# Since I have now found parameters to use in the model, I will make those parameters constant
+# Since I have now found parameters to use in the framework, I will make those parameters constant
 DAMP = 0.01                         # From DAR3-25p, used for damping linker parameters
 
 MASS = 109.0
@@ -75,10 +75,10 @@ def write_itp(itp_filename, Length, segments_list, positions_list):
     EG_BEADS_BY_COIL = []
 
     opener = f""";
-; Individual topology file (.itp) for a coil model
+; Individual topology file (.itp) for a Parallel-Antiparallel specified coil protein
 ; Title: {itp_filename}
-; Using the oligomeric modular model scheme
-; This file is generated automatically by "toplogy_assistant_pap_model.py"
+; Using the modular multimer scheme
+; This file is generated automatically by "toplogy_assistant_pap.py"
 ; This file MUST BE MANUALLY INCLUDED IN THE OVERALL .top FILE!
 ;
 
@@ -539,11 +539,12 @@ if __name__ == "__main__":
     # name==main style is a little overkill, but I'm including it here for good pythonic practice
 
     # Set up the argument parser!
-    parser = argparse.ArgumentParser(description="Topology Writer Tool -- Use this to make topology files for coil "
-                                                 "models, easy as pie! Cheap as Ubik, too!")
-    parser.add_argument("-df", help="Definition file: this contains the information on how to build the model, with"
+    parser = argparse.ArgumentParser(description="Topology Writer Tool -- Use this to make topology files for CC "
+                                                 "proteins with specific parallel vs. antiparallel orientation."
+                                                 " Second in performance only to Ubik!")
+    parser.add_argument("-df", help="Design file: this contains the information on how to build the protein, with"
                                     " alternating coil and linker segments.")
-    parser.add_argument("-n", help="The number of beads in the coil model.", type=int, required=True)
+    parser.add_argument("-n", help="The number of beads in the coil protein.", type=int, required=True)
     parser.add_argument("-itp", help="Activate to turn on .itp file writer.",
                         action="store_true")
     parser.add_argument("-itp_filename", help="File name for the .itp file. Please provide extension.")
@@ -555,24 +556,24 @@ if __name__ == "__main__":
     # Segments contains the names of each of the segments as they appear in order in the provided file
     # Positions contains the start/stop (and heptad) indices for the segments that correspond to the same index in the
     # Segments list
-    # here is the organization of the model file
+    # here is the organization of the protein design file
     # segment_type , start_position , end_position , heptad_start_position , oligo_type , oligo_ID , pap_switch
     Segments = []; Positions = []
-    with open(args.df, "r") as file:
+    with open(args.df, "r", encoding="utf-8-sig") as file:
         for line in file:
-            line_split = line.rstrip("\n").split(",")
-            if str(line_split[0][0]) == "#":
-                # I am now adding in comment support. Comments can exist in the model generation file and can be denoted
+            if line[0] == "#":
+                # I am now adding in comment support. Comments can exist in the design file and can be denoted
                 # as "#"
                 continue
-
-            Segments.append(str(line_split[0]))
-            if str(line_split[0]) == "coil":   # uses 0-indexing, this now handles the final column being oligo type
-                Positions.append([int(line_split[1]), int(line_split[2]), int(line_split[3]),
-                                  str(line_split[4]), line_split[5], str(line_split[6])])
-                                  # notice that index 5 has no type command!!!
             else:
-                Positions.append([int(line_split[1]), int(line_split[2])])
+                line_split = line.rstrip("\n").split(",")
+                Segments.append(str(line_split[0]))
+                if str(line_split[0]) == "coil":   # uses 0-indexing, this now handles the final column being oligo type
+                    Positions.append([int(line_split[1]), int(line_split[2]), int(line_split[3]),
+                                    str(line_split[4]), line_split[5], str(line_split[6])])
+                                  # notice that index 5 has no type command!!!
+                else:
+                    Positions.append([int(line_split[1]), int(line_split[2])])
 
     if args.itp:
         write_itp(args.itp_filename, args.n, Segments, Positions)

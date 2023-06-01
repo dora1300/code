@@ -10,9 +10,10 @@ to make linkers. Now, it will be used to make the whole model.
 IMPORTANTLY, it will take the SAME model_design.csv type of file used in the topology writing script
 "coil_topology_assistant.py" because this script will incorporate different amino acids based on the different segments.
 Specifically, it will assign the following:
-    A beads = ILE
-    B beads in coils = ALA
-    B beads in linkers = GLY
+    Coil sticky beads = ILE
+    Multimer beads = LYS (pos 'e') and GLU (pos 'g')
+    Inert beads in coils = ALA
+    Inert beads in linkers = GLY
 
 These amino acid assignments do not mean anything "physical" in the simulations, but they will be useful in handling PDB
 files. I'm specifically thinking that it will be useful when selecting specific regions of models in PyMOL.
@@ -20,15 +21,15 @@ files. I'm specifically thinking that it will be useful when selecting specific 
 math analysis. I am putting all those functions in this file to make things easier.
 
 @Updates:
-2022 10 28 -- updated to fix teh model file parsing, so that I can remove comments. This is taken from
-"topology_assistant_nonspecific_modularModel.py"
+2022 10 28 -- updated to fix the model file parsing, so that I can remove comments.
 
+2022 06 01 -- updated to correctly handling comments, which needs file decoding. Also updated the protein sequence so
+that positions 'e' are LYS and 'g' are GLU
 """
 
 import math as m
 import argparse
 import numpy as np
-import mdtraj as md
 from PeptideBuilder import Geometry
 import PeptideBuilder
 import Bio.PDB
@@ -156,13 +157,13 @@ if __name__ == "__main__":
     # name==main style is a little overkill, but I'm including it here for good pythonic practice
 
     # Set up the argument parser!
-    parser = argparse.ArgumentParser(description="Model Maker Tool -- use this to turn your desired coil model into"
+    parser = argparse.ArgumentParser(description="Model Maker Tool -- use this to turn your desired CC protein into"
                                                  " a starting PDB structure! Easy, and corresponds with the Topology"
-                                                 " Assistant too. Spreads on easy like Ubik!")
-    parser.add_argument("-df", help="Definition file: this contains the information on how to build the model, with"
+                                                 " Assistant too. Spreads on easy, like Ubik!")
+    parser.add_argument("-df", help="Design file: this contains the information on how to build the protein, with"
                                     " alternating coil and linker segments.")
-    parser.add_argument("-n", help="The number of beads in the coil model.", type=int, required=True)
-    parser.add_argument("-name", help="The name you'd like to give the coil model. No "
+    parser.add_argument("-n", help="The number of beads in the CC protein.", type=int, required=True)
+    parser.add_argument("-name", help="The name you'd like to give the CC protein. No "
                                       "extensions, please!", type=str, default="coil_model")
 
     # parse the arguments
@@ -175,20 +176,20 @@ if __name__ == "__main__":
     # Positions contains the start/stop (and heptad) indices for the segments that correspond to the same index in the
     # Segments list
     Segments = []; Positions = []
-    with open(args.df, "r") as file:
+    with open(args.df, "r", encoding="utf-8-sig") as file:
         for line in file:
-            line_split = line.rstrip("\n").split(",")
-            if str(line_split[0][0]) == "#":
+            if line[0] == "#":
                 # I am now adding in comment support. Comments can exist in the model generation file and can be denoted
                 # as "#"
                 continue
-
-            Segments.append(str(line_split[0]))
-            if str(line_split[0]) == "coil":   # uses 0-indexing, this now handles the final column being oligo type
-                Positions.append([int(line_split[1]), int(line_split[2]), int(line_split[3]),
-                                  str(line_split[4]), line_split[5]])  # notice that index 5 has no type command!!!
             else:
-                Positions.append([int(line_split[1]), int(line_split[2])])
+                line_split = line.rstrip("\n").split(",")
+                Segments.append(str(line_split[0]))
+                if str(line_split[0]) == "coil":   # uses 0-indexing, this now handles the final column being oligo type
+                    Positions.append([int(line_split[1]), int(line_split[2]), int(line_split[3]),
+                                    str(line_split[4]), line_split[5]])  # notice that index 5 has no type command!!!
+                else:
+                    Positions.append([int(line_split[1]), int(line_split[2])])
 
     # Now parse the model_design data and interpret the sequence
     model_sequence = ""
@@ -201,8 +202,12 @@ if __name__ == "__main__":
         else:                   # coil handling
             a_posits = []
             d_posits = []
+            e_posits = []
+            g_posits = []
             a_index = Positions[i][2]
             d_index = Positions[i][2] + 3
+            e_index = Positions[i][2] + 4
+            g_index = Positions[i][2] + 6
             while a_index <= segStop:
                 a_posits.append(a_index)
                 a_index += 7
@@ -214,6 +219,10 @@ if __name__ == "__main__":
                     model_sequence += "I"
                 elif c_i in d_posits:
                     model_sequence += "I"
+                elif c_i in e_posits:
+                    model_sequence += "A"
+                elif c_i in g_posits:
+                    model_sequence += "A"
                 else:
                     model_sequence += "A"
 
