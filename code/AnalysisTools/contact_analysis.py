@@ -36,7 +36,7 @@ parser.add_argument("-ncoils", help="The total number of coils in the simulation
                     type=int)
 #parser.add_argument("-nprots", help="The total number of individual proteins in the simulation", required=True,
 #                    type=int)
-parser.add_argument("-ft", help="Frame time, i.e. the amount of time that each frame is worth in simulation [ns]",
+parser.add_argument("-ft", help="Frame time, i.e. the amount of time that each frame is worth in simulation [ps]",
                     required=True, type=int)
 parser.add_argument("-output", help="A common name to give to output files. Default = [output]",
                     default="output", type=str)
@@ -212,7 +212,7 @@ I want to do something else with it.
 """
 # first, handle the plot
 fig, ax = plt.subplots()
-ax.hist(multimer_lifetimes*FRAME_TIME, density=True, color="grey",
+ax.hist((np.array(multimer_lifetimes)*FRAME_TIME)/1000, density=True, color="grey",
         bins=int(np.max(multimer_lifetimes*FRAME_TIME)/2))
 plt.xlabel("Multimer lifetimes (ns)")
 plt.ylabel("Counts")
@@ -222,10 +222,10 @@ plt.tight_layout()
 plt.savefig(f"{args.output}_multimer_lifetimes.png", dpi=600)
 plt.close()
 
-avg_lifetime = np.average(multimer_lifetimes * FRAME_TIME)
-std_lifetime = np.std(multimer_lifetimes * FRAME_TIME)
-max_lifetime = np.max(multimer_lifetimes * FRAME_TIME)
-mode_lifetime = st.mode(multimer_lifetimes * FRAME_TIME)
+avg_lifetime = np.average(multimer_lifetimes * FRAME_TIME) / 1000
+std_lifetime = np.std(multimer_lifetimes * FRAME_TIME) / 1000
+max_lifetime = np.max(multimer_lifetimes * FRAME_TIME) / 1000
+mode_lifetime = st.mode(multimer_lifetimes * FRAME_TIME) / 1000
 
 with open(f"{args.output}_multimerLifetimes_stats.csv", 'w') as f:
     f.write(f"Average lifetime (ns),{avg_lifetime}\n")
@@ -233,9 +233,10 @@ with open(f"{args.output}_multimerLifetimes_stats.csv", 'w') as f:
     f.write(f"Max lifetime (ns),{max_lifetime}\n")
     f.write(f"Mode lifetime (ns),{mode_lifetime}\n")
 
-np.savetxt(f"{args.output}_multimerLifetimes(ns).csv", (multimer_lifetimes * FRAME_TIME), delimiter=",")
+np.savetxt(f"{args.output}_multimerLifetimes(ns).csv",
+           (np.array(multimer_lifetimes) * FRAME_TIME), delimiter=",")
 
-pd.DataFrame(multimer_lifetimes * FRAME_TIME).to_csv(f"{args.output}_multimerLifetimes(ns).csv")
+pd.DataFrame(np.array(multimer_lifetimes) * FRAME_TIME).to_csv(f"{args.output}_multimerLifetimes(ns).csv")
 
 
 
