@@ -225,13 +225,13 @@ plt.close()
 avg_lifetime = np.average(multimer_lifetimes * FRAME_TIME) / 1000
 std_lifetime = np.std(multimer_lifetimes * FRAME_TIME) / 1000
 max_lifetime = np.max(multimer_lifetimes * FRAME_TIME) / 1000
-mode_lifetime = st.mode(multimer_lifetimes * FRAME_TIME) / 1000
+mode_lifetime = st.mode(multimer_lifetimes * FRAME_TIME)
 
 with open(f"{args.output}_multimerLifetimes_stats.csv", 'w') as f:
     f.write(f"Average lifetime (ns),{avg_lifetime}\n")
     f.write(f"StDev lifetime (ns),{std_lifetime}\n")
     f.write(f"Max lifetime (ns),{max_lifetime}\n")
-    f.write(f"Mode lifetime (ns),{mode_lifetime}\n")
+    f.write(f"Mode lifetime (ps),{mode_lifetime}\n")
 
 np.savetxt(f"{args.output}_multimerLifetimes(ns).csv",
            (np.array(multimer_lifetimes) * FRAME_TIME), delimiter=",")
