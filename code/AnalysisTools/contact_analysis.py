@@ -28,15 +28,16 @@ import matplotlib.pyplot as plt
 parser = argparse.ArgumentParser(description="This script analyzes coil multimer contacts to produce results about:"
                                              " (1) Number of unique interactions that a coil will see,"
                                              " (2) Total number of interactions an average coil will make, and"
-                                             " (3) Lifetime (in ns) of coil multimer interactions.")
-parser.add_argument("-data", help="Data file from multimerization analysis -- list of coil multimer"
-                                  " contacts, each line marks a new frame (.csv)."
+                                             " (3) Lifetime (in ps) of coil multimer interactions.")
+parser.add_argument("-data", help="Contacts list data file multimerization analysis -- list of coil multimer"
+                                  " contacts, each line marks an ANALYZED frame (.csv)."
                                   " Please provide path if not in working directory.", required=True)
 parser.add_argument("-ncoils", help="The total number of coils in the simulation", required=True,
                     type=int)
 #parser.add_argument("-nprots", help="The total number of individual proteins in the simulation", required=True,
 #                    type=int)
-parser.add_argument("-ft", help="Frame time, i.e. the amount of time that each frame is worth in simulation [ps]",
+parser.add_argument("-ft", help="[ps] Frame time, i.e. the amount of time that each frame in the Contacts Data File "
+                                "is worth in simulation. Integers only.",
                     required=True, type=int)
 parser.add_argument("-output", help="A common name to give to output files. Default = [output]",
                     default="output", type=str)
@@ -44,10 +45,20 @@ parser.add_argument("-output", help="A common name to give to output files. Defa
 args = parser.parse_args()
 
 
+"""
+Warning message about the frame time -- have to make sure the user understands!
+"""
+print("""
+CAUTION -- be careful that you have calculated the frame time (flag -ft) correctly, and make sure that
+the units you've calculated match what the code expects. This analysis code has absolutely no way of knowing
+how much simulation time corresponds to each analyzed frame in the _contacts.txt data file.
+""")
+
+
 # Assign the arguments to their rightful variables
 NCOILS = args.ncoils
 #NMODELS = args.nprots
-FRAME_TIME = args.ft          # units of ns
+FRAME_TIME = args.ft          # units of ps
 RESULTS = args.data
 
 
@@ -208,9 +219,21 @@ plt.rcParams['font.size'] = 14
 """
 Do some analysis of the LIFETIME data, and save a plot. Also, save out the list of lifetimes in case
 I want to do something else with it.
-    Don't forget to convert the lifetimes [frames] to simulation time [ns]!!
+    Don't forget to convert the lifetimes [frames] to simulation time [ps]!!
 """
-# first, handle the plot
+# first, handle the plot (which is in ps)
+fig, ax = plt.subplots()
+ax.hist((np.array(multimer_lifetimes)*FRAME_TIME), density=True, color="grey",
+        bins=int(np.max(multimer_lifetimes*FRAME_TIME)/2))
+plt.xlabel("Multimer lifetimes (ps)")
+plt.ylabel("Counts")
+plt.title("Lifetime of multimer interactions")
+plt.grid(linestyle=":", color="black", alpha=0.35)
+plt.tight_layout()
+plt.savefig(f"{args.output}_multimer_lifetimes(ps).png", dpi=600)
+plt.close()
+
+# second, handle the plot (which is in ns) NOTICE THE DIFFERENT UNITS FOR CONVENIENCE!
 fig, ax = plt.subplots()
 ax.hist((np.array(multimer_lifetimes)*FRAME_TIME)/1000, density=True, color="grey",
         bins=int(np.max(multimer_lifetimes*FRAME_TIME)/2))
@@ -219,24 +242,23 @@ plt.ylabel("Counts")
 plt.title("Lifetime of multimer interactions")
 plt.grid(linestyle=":", color="black", alpha=0.35)
 plt.tight_layout()
-plt.savefig(f"{args.output}_multimer_lifetimes.png", dpi=600)
+plt.savefig(f"{args.output}_multimer_lifetimes(ns).png", dpi=600)
 plt.close()
 
-avg_lifetime = np.average(multimer_lifetimes * FRAME_TIME) / 1000
-std_lifetime = np.std(multimer_lifetimes * FRAME_TIME) / 1000
-max_lifetime = np.max(multimer_lifetimes * FRAME_TIME) / 1000
-mode_lifetime = st.mode(multimer_lifetimes * FRAME_TIME)
+# save stats in ps only
+avg_lifetime = np.average(np.array(multimer_lifetimes) * FRAME_TIME)
+std_lifetime = np.std(np.array(multimer_lifetimes) * FRAME_TIME)
+max_lifetime = np.max(np.array(multimer_lifetimes) * FRAME_TIME)
 
 with open(f"{args.output}_multimerLifetimes_stats.csv", 'w') as f:
-    f.write(f"Average lifetime (ns),{avg_lifetime}\n")
-    f.write(f"StDev lifetime (ns),{std_lifetime}\n")
-    f.write(f"Max lifetime (ns),{max_lifetime}\n")
-    f.write(f"Mode lifetime (ps),{mode_lifetime}\n")
+    f.write(f"Average lifetime (ps),{avg_lifetime}\n")
+    f.write(f"StDev lifetime (ps),{std_lifetime}\n")
+    f.write(f"Max lifetime (ps),{max_lifetime}\n")
 
-np.savetxt(f"{args.output}_multimerLifetimes(ns).csv",
+np.savetxt(f"{args.output}_multimerLifetimes(ps).csv",
            (np.array(multimer_lifetimes) * FRAME_TIME), delimiter=",")
 
-pd.DataFrame(np.array(multimer_lifetimes) * FRAME_TIME).to_csv(f"{args.output}_multimerLifetimes(ns).csv")
+pd.DataFrame(np.array(multimer_lifetimes) * FRAME_TIME).to_csv(f"{args.output}_multimerLifetimes(ps).csv")
 
 
 
