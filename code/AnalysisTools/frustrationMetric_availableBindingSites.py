@@ -1,33 +1,13 @@
 """
-@Title:             multimerization_analysis.py
+@Title:             frustrationMetric_availableBindingSites.py
 @Name:              Mando A Ramirez
-@Date:              2023 04 06
+@Date:              2023 08 14
 
-@Description:       This script is an extension and improvement upon its related sister code,
-"coil_multimer_analysis.py".
+@Description:       This script is an extension of my "multimerization_analysis.py" script, and uses the same basic
+functioning, to generate my FRUSTRATION METRIC.
 
-The difference between this and the other script is that this script calculates distances and 
-neighbors using the **centers of mass** of each coil's A beads. Additionally, the distance 
-calculations are "vectorized", meaning they happen all at once and I then figure out neighbors
-after that.
-
-
-This script analyzes the multimeric state of coil simulations to produce statistics about the
-different types of multimers and higher order assemblies that form with coils in a box. I am writing this script with
-slab simulations in mind so I can track the types of multimers that form through simulation time. I will be calcualte
-the following:
-    - the types of each multimers through time (per-frame)
-    - the distribution of each multimers for the whole simulation
-    - the number-per-frame and distribution of self-vs-other interactions
-    - the number-per-frame and distribution of free coils for the simulation
-
-This script will first be written to handle only homomeric simulations of models, but can easily be modified to handle
-heteromeric simulations.
-
-@Updates:
-2023 04 28 -- added a new feature to save the contacts in every analyzed frame. This will output the indices of coils
-that are determined to be interacting, and save them to a .txt file. For a typical 10 us simulation, with every single
-frame analyzed, the expected output file is somewhere around 10-20 MB, which isn't terrible.
+In this case, the FRUSTRATION METRIC is the "number of available binding sites" metric, which calculates how many possible
+other coils can bind to a given protein, and is a measure of frustration.
 """
 
 import mdtraj as md
@@ -77,8 +57,7 @@ parser = argparse.ArgumentParser(description="Coil multimerization tool - this d
 parser.add_argument("-df", help="Definition file: this contains the information on how to build the model, with"
                                 " alternating coil and linker segments.")
 parser.add_argument("-nmodels", help="The total number of models in the simulation", required=True, type=int)
-parser.add_argument("-N", help="The total number of coil segments in the simulation. Necessary for the distribution"
-                               " plotting.", required=True, type=int)
+parser.add_argument("-N", help="The total number of coil segments in the simulation.", required=True, type=int)
 parser.add_argument("-l", help="No. of beads in an ENTIRE SINGLE PROTEIN. This is not the size of an individual coil. This is "
                                "the size of an entire individual protein. As of right now, ONLY proteins that have the"
                                " same no. of beads can be analyzed.",
@@ -95,17 +74,14 @@ parser.add_argument("-stop", help="the stop TIME [ps] to end the analysis. Defau
 parser.add_argument("-f", help="the stride of analysis i.e. analyze every fth frame, default = 1", default=1, type=int)
 parser.add_argument("-single", help="a switch to turn on if the analysis is only for a single structure file",
     action="store_true", default=False)
-parser.add_argument("-name", help="name that you'd like to add to the analysis output files",
-                    default="multimerAnalysis")
+parser.add_argument("-name", help="name that you'd like to add to the analysis output files", default="output")
 parser.add_argument("-timeseries", help="pass the flag to turn on plotting of multimer data as a time series",
                     action="store_true", default=False)
-parser.add_argument("-distro", help="pass this flag to turn on plotting of average multimer population, as a "
-                                    "distribution", action="store_true", default=False)
 parser.add_argument("-verbose", help="pass this flag to output extra information to stdout.", action="store_true",
                     default=False)
-parser.add_argument("-save", help="pass this flag to save the 'contact map', which is just a list of coil indices"
-                                  "of every multimer, in every analyzed frame. Output file is .txt.",
-                    action="store_true", default=False)
+parser.add_argument("-multimer", help="the type of multimer that the coils can form, i.e. 'dimer', or 'trimer'."
+                        " The protein must be homogenous for multimer type meaning that all coils have to form "
+                        "the same type of multimer.", required=True)
 
 args = parser.parse_args()
 
@@ -138,7 +114,6 @@ if args.single:
     args.f = 1
     args.timeseries = False     # can't do timeseries for just 1 frame!
         # this also adds a user sanity check to make sure that the code doesn't 
-        
         # try to do something that doesn't make sense.
     remaining_frames = 1
     analyzed_frames = 1
@@ -293,15 +268,6 @@ Iterate through every frame {
 }
 """
 
-if args.save:
-    output_file_name = f"{args.name}_contacts.txt"
-    # open and turn on the output file. BUT check to make sure the file doesn't already exist because this
-    # method only works by appending.
-    if os.path.isfile(f"./{output_file_name}"):
-        raise FileExistsError("Desired contact output file already exists. Exiting now to prevent overwriting!")
-    else:
-        outputFile = open(output_file_name, 'a')
-
 # Set ANALYSIS variables
 # These are the TIME SERIES/Frame data for multimers and self-vs-other interactions. 
 # Each entry will correspond to the total of that category, in order of frames
@@ -338,11 +304,6 @@ for frame in range(0, traj.n_frames, args.f):
                 # that are neighbors, out of the total number of coils in the simulation
         multimer_size = len(neighbors)
 
-        if args.save:
-            if multimer_size > 1:
-                np.savetxt(outputFile, neighbors, delimiter=" ", fmt="%i", newline=" ")
-                outputFile.write(" ")
-
         if multimer_size == 1:
             free_coil_counter += 1
         elif multimer_size == 2:
@@ -361,8 +322,6 @@ for frame in range(0, traj.n_frames, args.f):
         for indices in neighbors:
             excluded_coils.append(indices)
 
-    if args.save:
-        outputFile.write("\n")
     # Now add the frame values to the ANALYSIS variables and move onto the next frame
     # This CANNOT be a running total and instead there needs to be an entry for every 
     # frame analyzed
@@ -376,8 +335,6 @@ for frame in range(0, traj.n_frames, args.f):
     SELF.append(frame_self)
     OTHER.append(frame_other)
 
-if args.save:
-    outputFile.close()
     
 """ End the timing work. This is because the majority of the time will happen above with the 
 actual calculation of the haystack """
@@ -388,115 +345,36 @@ print("-----------------------------")
 print(f"Elapsed time for the analysis of neighbor searching and multimer analysis: {elapsed_time:.4f} hours")
 print("-----------------------------")
 
-# Calculate normalized counts (normalized to number of coil segments in a box, averaged over
-#   all frames)
-free_average = np.average(FREE_COILS); free_std = np.std(FREE_COILS)
-norm_free = (free_average * 1.) / float(args.N)
-norm_free_std = (free_std * 1.) / float(args.N)
-dimer_average = np.average(DIMERS); dimer_std = np.std(DIMERS)
-norm_dimer = (dimer_average * 2.) / float(args.N)
-norm_dimer_std = (dimer_std * 2.) / float(args.N)
-trimer_average = np.average(TRIMERS); trimer_std = np.std(TRIMERS)
-norm_trimer = (trimer_average * 3.) / float(args.N)
-norm_trimer_std = (trimer_std * 3.) / float(args.N)
-tet_average = np.average(TETRAMERS); tet_std = np.std(TETRAMERS)
-norm_tet = (tet_average * 4.) / float(args.N)
-norm_tet_std = (tet_std * 4.) / float(args.N)
-pent_average = np.average(PENTAMERS); pent_std = np.std(PENTAMERS)
-norm_pent = (pent_average * 5.) / float(args.N)
-norm_pent_std = (pent_std * 5.) / float(args.N)
-hex_average = np.average(HEXAMERS); hex_std = np.std(HEXAMERS)
-norm_hex = (hex_average * 6.) / float(args.N)
-norm_hex_std = (hex_std * 6.) / float(args.N)
+
+# Here is where the code diverges from 'multimerization_analysis.py'
+# I will be using the FREE_COILS, DIMERS, etc. lists to calculate the number of available
+# binding sites in the simulation
+BINDING_SITES = []
+if args.multimer == 'dimer':
+    for i in range(len(FREE_COILS)):
+        binding_sites = FREE_COILS[i]*1
+        BINDING_SITES.append(binding_sites)
+else:
+    for i in range(len(FREE_COILS)):
+        binding_sites = FREE_COILS[i]*2 + DIMERS[i]*1
+        BINDING_SITES.append(binding_sites)
 
 
-# Handle the plotting of important information
-if args.distro:
-    fig, ax = plt.subplots()
-    ax.errorbar([1, 2, 3, 4, 5, 6], 
-        [norm_free, norm_dimer, norm_trimer, norm_tet, norm_pent, norm_hex],
-        yerr=[norm_free_std, norm_dimer_std, norm_trimer_std, norm_tet_std, norm_pent_std, norm_hex_std], 
-        color="black", linestyle="",
-        markersize=10, marker=".", ecolor="black", elinewidth=1, capsize=5)
-    plt.xticks(np.arange(0, 7))
-    plt.xlim(0, 6)
-    plt.ylim(0, 1)
-    plt.xlabel("N-mer")
-    plt.ylabel("Counts")
-    plt.grid(color="black", linestyle=":", alpha=0.5)
-    plt.savefig(f"{args.name}_multimeric_analysis_distribution.png", dpi=600)
-
-if args.verbose:
-    print(f"Sum of normalized coil counts across multimers (should equal 1):"
-        f" {np.sum(np.array([norm_free, norm_dimer, norm_trimer, norm_tet, norm_pent, norm_hex])):.4f}")
-
+# Here I will save the output of whatever is in BINDING_SITES, which is either a single value or 
+# an array of values by frame.
 if args.single:
     arFrames = np.array([0])
 else:
     arFrames = np.arange(0+args.start, (traj.n_frames*traj.timestep)+args.start, (args.f*traj.timestep))
-if args.timeseries:
-    fig, ax = plt.subplots(figsize=(10,5))
-    ax.plot(arFrames, np.array(FREE_COILS), color="blue", label = "Free coils",
-              linewidth=1)
-    ax.plot(arFrames, np.array(DIMERS), color="slategrey", label = "Dimers",
-             linewidth=1)
-    ax.plot(arFrames, np.array(TRIMERS), color="darkorange", label = "Trimers",
-             linewidth=1)
-    ax.plot(arFrames, np.array(TETRAMERS), color="blueviolet", label = "Tetramers",
-              linewidth=1)
-    ax.plot(arFrames, np.array(PENTAMERS), color="seagreen", label = "Pentamers",
-              linewidth=1)
-    ax.plot(arFrames, np.array(HEXAMERS), color="goldenrod", label = "Hexamers",
-              linewidth=1)
-    ax.plot(arFrames, np.array(HIGHER), color="red", label = "Higher order oligos*",
-              linewidth=1)
-    plt.legend(loc="center left", bbox_to_anchor=(1.01, 0.5))
+outputdata = [arFrames, BINDING_SITES]
+pd.DataFrame(np.array(outputdata)).to_csv(f"{args.name}_frustrationMetric_availableBindingSites.csv", header=False)
+
+if args.timeseries and (not args.single):
+    fig, ax = plt.subplots()
+    ax.plot(arFrames, np.array(BINDING_SITES)/args.N, color="darkorange", label="No. binding sites")
     plt.grid(alpha=0.5)
-    plt.ylabel("Counts")
+    plt.ylabel(f"Normalized counts (to {args.N})")
     plt.xlabel("Simulation time (ps)")
     plt.tight_layout()
-    plt.savefig(f"{args.name}_multimeric_analysis_timeseries.png", dpi=600)
+    plt.savefig(f"{args.name}_frustrationMetric_availableBindingSites_timeseries.png", dpi=600)
     plt.close()
-
-# as of 2023 04 07 -- analysis of self to other coils is not included in the analysis
-#     fig, ax = plt.subplots()
-#     ax.plot(arFrames, np.array(SELF), color="black", label = "Intra-model interactions",
-#               linewidth=1)
-#     ax.plot(arFrames, np.array(OTHER), color="blue", label = "Inter-model interactions",
-#              linewidth=1)
-#     plt.legend()
-#     plt.grid(alpha=0.5)
-#     plt.ylabel("Counts")
-#     plt.xlabel("Simulation time (ps)")
-#     plt.savefig(f"{args.name}_selfvsother_analysis.png", dpi=600)
-#     plt.close()
-
-
-# Now save out all the data so I can use it later:
-outputdata = [arFrames, np.array(FREE_COILS), np.array(DIMERS), 
-    np.array(TRIMERS), np.array(TETRAMERS), np.array(PENTAMERS),
-    np.array(HEXAMERS), np.array(HIGHER), 
-    np.array(SELF), np.array(OTHER)]
-pd.DataFrame(np.array(outputdata)).to_csv(f"{args.name}_multimerAnalysis_outData.csv", header=False)
-
-print(f"Number of frames in trajectory after slicing from the starting point: {remaining_frames}")
-print(f"The total number of analyzed frames, based on the '-f' argument: {analyzed_frames}")
-if args.verbose:
-    print("""
-The output file is organized by rows, as follows:
-Row 0 - time (ps)
-Row 1 - Number of monomers
-Row 2 - Number of dimers
-Row 3 - Number of trimers
-Row 4 - Number of tetramers
-Row 5 - Number of pentamers
-Row 6 - Number of hexamers
-Row 7 - Number of higher order species
-Row 8 - Number of self-protein interactions (not counted as of 2023 04 07)
-Row 9 - Number of other-protein interactions (not counted as of 2023 04 07)
-""")
-if args.save:
-    print("You have elected to save out the list of coil contacts in found multimers, which saves the indices of all"
-          " interacting coils (0-indexed) to an output file. Each line in the file corresponds to the contacts found"
-          " in a given frame, and each pair/grouping of contacts is separated by a double space. Use this fact to"
-          " parse the output file for further analysis.")
