@@ -82,6 +82,11 @@ parser.add_argument("-verbose", help="pass this flag to output extra information
 parser.add_argument("-multimer", help="the type of multimer that the coils can form, i.e. 'dimer', or 'trimer'."
                         " The protein must be homogenous for multimer type meaning that all coils have to form "
                         "the same type of multimer.", required=True)
+parser.add_argument("-ncoils", help="The number of coils *per protein*. All proteins must have the same number of coil "
+                    "segments per protein for this to be meaningful. Used for normalizing the frustration metric",
+                    type=int)
+parser.add_argument("-normalize", help="normalize the frustration metric to the theoretical max. This makes"
+                    " the most sense for single structures only.", action="store_true", default=False)
 
 args = parser.parse_args()
 
@@ -359,6 +364,17 @@ else:
         binding_sites = FREE_COILS[i]*2 + DIMERS[i]*1
         BINDING_SITES.append(binding_sites)
 
+if args.single and args.normalize:
+    if args.multimer == 'dimer':
+        theoretical_max = args.ncoils * 1.0
+    else:
+        theoretical_max = args.ncoils * 2.0
+    print("You have chosen to normalize the frustration metric to the theoretical max.")
+    print("Verify that the max is calculated correctly:")
+    print(f"Number of coils per protein: {args.ncoils} ; Multimer type: {args.multimer}")
+    print(f"Computed theoretical max: {theoretical_max}")
+    BINDING_SITES = np.array(BINDING_SITES) / theoretical_max
+
 
 # Here I will save the output of whatever is in BINDING_SITES, which is either a single value or 
 # an array of values by frame.
@@ -371,6 +387,7 @@ pd.DataFrame(np.array(outputdata)).to_csv(f"{args.name}_frustrationMetric_availa
 
 if args.timeseries and (not args.single):
     fig, ax = plt.subplots()
+    # I don't know if normalizing to args.N makes the most sense but I'm going with it anyway
     ax.plot(arFrames, np.array(BINDING_SITES)/args.N, color="darkorange", label="No. binding sites")
     plt.grid(alpha=0.5)
     plt.ylabel(f"Normalized counts (to {args.N})")
