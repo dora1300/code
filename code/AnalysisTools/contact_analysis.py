@@ -41,6 +41,8 @@ parser.add_argument("-ft", help="[ps] Frame time, i.e. the amount of time that e
                     required=True, type=int)
 parser.add_argument("-output", help="A common name to give to output files. Default = [output]",
                     default="output", type=str)
+parser.add_argument("-lifetimes", help="Pass this flag to only calculate the lifetimes of interactions.",
+                    action="store_true", default=False)
 
 args = parser.parse_args()
 
@@ -122,6 +124,9 @@ with open(RESULTS, 'r') as f:
             # <https://stackoverflow.com/questions/6429638/
             # how-to-split-a-string-of-space-separated-numbers-into-integers>
             try:
+                # This turns all the coil indices into integers, using the map() function
+                # map() applies a function to all items in a list (which here is generated using
+                # .split()) and then returns an iterator, which I put into a list using list()
                 indices = list(map(int, contacts.split(" ")))
             except:
                 # this will fail only if there are no interactions!
@@ -261,6 +266,11 @@ np.savetxt(f"{args.output}_multimerLifetimes(ps).csv",
 pd.DataFrame(np.array(multimer_lifetimes) * FRAME_TIME).to_csv(f"{args.output}_multimerLifetimes(ps).csv")
 
 
+# Here I can break if I'm only calculating the lifetime data!
+if args.lifetimes:
+    exit(0)
+else:
+    pass
 
 """
 Total interactions throughout the simulation for each coil.
