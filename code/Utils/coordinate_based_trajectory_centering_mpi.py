@@ -139,7 +139,7 @@ TRAJ = args.t
 TPR = args.s
 
 START_FRAME = args.start
-STOP_FRAME = args.stop
+STOP_FRAME = args.end
 FRAME_ITER = args.dt
 TIME_UNIT = args.tu
 
