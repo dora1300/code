@@ -14,6 +14,8 @@ Updates:
 2023 10 20          Updated to include an argument parser for general use!
 
 2023 10 22          This has updated commands to be able to run on a supercomputer, if needed!
+
+2023 11 09          Updated to remove the hard coded boundaries for verifying densities.
 """
 
 import subprocess
@@ -21,7 +23,7 @@ import os
 import numpy as np
 import argparse
 
-def read_density(FILENAME):
+def read_density(FILENAME, low_point, high_point):
     slices = []; densities = []
 
     with open(FILENAME, 'r') as f:
@@ -40,9 +42,9 @@ def read_density(FILENAME):
    
     exterior = []; interior = []
     for i, dens in enumerate(densities):
-        if i < 10:
+        if i < low_point:
             exterior.append(dens)
-        elif i >= 64:
+        elif i >= high_point:
             exterior.append(dens)
         else:
             interior.append(dens)
@@ -58,7 +60,7 @@ def read_density(FILENAME):
      
     return box_center
 
-def check_density(FILENAME):
+def check_density(FILENAME, low_point, high_point):
     slices = []; densities = []
 
     with open(FILENAME, 'r') as f:
@@ -78,9 +80,9 @@ def check_density(FILENAME):
     exterior = []; interior = []
     for i, dens in enumerate(densities):
         # more strict check for what constitutes the edge of the box
-        if i < 15:
+        if i < low_point:
             exterior.append(dens)
-        elif i >= 60:
+        elif i >= high_point:
             exterior.append(dens)
         else:
             interior.append(dens)
@@ -120,17 +122,36 @@ parser = argparse.ArgumentParser(description="Tool for performing coordinate-bas
                                  "is in the middle of the box.")
 parser.add_argument('-t', help="Input trajectory file for centering. PBC and other standard traj corrections "
                     "do not need to be made. PROVIDE EXTENSION.", required=True, type=str)
-parser.add_argument('-s', help="A GROMACS .tpr run file for the associated trajectory. PROVIDE EXTENSION.", 
-                    required=True, type=str)
-parser.add_argument('-start', help="[tu] The time at which to START the analysis.", 
-                    required=True, type=int)
-parser.add_argument('-end', help="[tu] The time at which to STOP the analysis.", 
-                    required=True, type=int)
-parser.add_argument('-dt', help="The intervals at which to do the analysis. ", 
-                    required=True, type=int, default=1)
-parser.add_argument('-tu', help="Time unit for the start and stop times. Must the same time unit for both times. "
-                    "Accepted values are 'ps' , 'ns' , 'us' ",
-                    required=True, type=str)
+parser.add_argument('-s', 
+        help="A GROMACS .tpr run file for the associated trajectory. PROVIDE EXTENSION.", 
+        required=True, type=str)
+parser.add_argument('-start', 
+        help="[tu] The time at which to START the analysis.", 
+        required=True, type=int)
+parser.add_argument('-end', 
+        help="[tu] The time at which to STOP the analysis.", 
+        required=True, type=int)
+parser.add_argument('-dt', 
+        help="The intervals at which to do the analysis. ", 
+        required=True, type=int, default=1)
+parser.add_argument('-tu', 
+        help="Time unit for the start and stop times. Must the same time unit for both times. "
+        "Accepted values are 'ps' , 'ns' , 'us' ",
+        required=True, type=str)
+parser.add_argument("-extLow",
+        help="What is the *lower* value of the density profile slices corresponding to the dilute "
+        "regime? e.g. in a box with 100 slices in the density, this value could be `15`.",
+        required=True, type=int)
+parser.add_argument("-extHigh"
+        help="What is the *higher* value of the density profile slices corresponding to the dilute "
+        "regime? e.g. in a box with 100 slices in the density, this value could be `15`.",
+        required=True, type=int)
+parser.add_argument("-sl", 
+        help="How many slices do you want to divide the density profile into? This parameter "
+        "will be passed into the `gmx_density -sl` function",
+        required=True, type=int)
+parser.add_argument("-center", 
+                    help="The location of the center of the ")
 
 
 args = parser.parse_args()
@@ -142,6 +163,11 @@ START_FRAME = args.start
 STOP_FRAME = args.end
 FRAME_ITER = args.dt
 TIME_UNIT = args.tu
+
+LOW = args.extLow
+HIGH = args.extHigh
+
+SL = args.sl
 
 
 # Define the TIME_FACTOR, which is important for multiplying things below
@@ -195,9 +221,9 @@ for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
         # Step 3 - calculate the density and determine what type of box center option to use
         density = (f"echo 1 | mpirun -np 1 gmx_mpi density -f {TRAJ} -s {TPR} "
                    f"-b {FRAME*TIME_FACTOR} -e {FRAME*TIME_FACTOR} "
-                   f"-sl 75 -dens number -o dens_{FRAME}.xvg")
+                   f"-sl {SL} -dens number -o dens_{FRAME}.xvg")
         subprocess.call(density, shell=True)
-        BOX_CENTER = read_density(f"dens_{FRAME}.xvg")
+        BOX_CENTER = read_density(f"dens_{FRAME}.xvg", LOW, HIGH)
         print(f"Initial selected box center spec: {BOX_CENTER}")
         os.remove(f"dens_{FRAME}.xvg")
         
@@ -212,10 +238,10 @@ for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
         # Step 5 - this is the quality check. This is where I see if the frame was correctly centered
         density_verify = (f"echo 1 | mpirun -np 1 gmx_mpi density "
                           f"-f ./traj_files/frame_{FRAME}{TIME_UNIT}.xtc -s {TPR}  "
-                          f"-b {FRAME*TIME_FACTOR} -e {FRAME*TIME_FACTOR} -sl 75 "
+                          f"-b {FRAME*TIME_FACTOR} -e {FRAME*TIME_FACTOR} -sl {SL} "
                           f"-dens number -o dens_{FRAME}_verify.xvg")
         subprocess.call(density_verify, shell=True)
-        verify_results = check_density(f"dens_{FRAME}_verify.xvg")
+        verify_results = check_density(f"dens_{FRAME}_verify.xvg", LOW, HIGH)
         if verify_results == 0:
             # this means the interior has the highest density, which means the slab has hopefully been placed
             # in the center of the simulation box
@@ -260,9 +286,9 @@ for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
     # Step 3 - calculate the density and determine what type of box center option to use
     density = (f"echo 1 | mpirun -np 1 gmx_mpi density -f {TRAJ} -s {TPR} "
                f"-b {FRAME*TIME_FACTOR} -e {FRAME*TIME_FACTOR} "
-               f"-sl 75 -dens number -o dens_{FRAME}.xvg")
+               f"-sl {SL} -dens number -o dens_{FRAME}.xvg")
     subprocess.call(density, shell=True)
-    BOX_CENTER = read_density(f"dens_{FRAME}.xvg")
+    BOX_CENTER = read_density(f"dens_{FRAME}.xvg", LOW, HIGH)
     print(f"Initial selected box center spec: {BOX_CENTER}")
     os.remove(f"dens_{FRAME}.xvg")
 
@@ -282,9 +308,9 @@ for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
     density_verify = (f"echo 1 | mpirun -np 1 gmx_mpi density "
                       f"-f ./traj_files/frame_{FRAME}{TIME_UNIT}.xtc -s {TPR} "
                       f"-b {FRAME*TIME_FACTOR} -e {FRAME*TIME_FACTOR} "
-                      f"-sl 75 -dens number -o dens_{FRAME}_verify.xvg")
+                      f"-sl {SL} -dens number -o dens_{FRAME}_verify.xvg")
     subprocess.call(density_verify, shell=True)
-    verify_results = check_density(f"dens_{FRAME}_verify.xvg")
+    verify_results = check_density(f"dens_{FRAME}_verify.xvg", LOW, HIGH)
     if verify_results == 0:
         # this means the interior has the highest density, which means the slab has hopefully been placed
         # in the center of the simulation box
