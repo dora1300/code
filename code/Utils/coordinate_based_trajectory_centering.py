@@ -139,20 +139,18 @@ parser.add_argument('-tu',
         "Accepted values are 'ps' , 'ns' , 'us' ",
         required=True, type=str)
 parser.add_argument("-extLow",
-        help="What is the *lower* value of the density profile slices corresponding to the dilute "
-        "regime? e.g. in a box with 100 slices in the density, this value could be `15`.",
+        help="What is the *lower* value of the density profile slices corresponding to the "
+        "dilute regime? e.g. in a box with 100 slices in the density, this value could be `15`.",
         required=True, type=int)
-parser.add_argument("-extHigh"
-        help="What is the *higher* value of the density profile slices corresponding to the dilute "
-        "regime? e.g. in a box with 100 slices in the density, this value could be `15`.",
+parser.add_argument("-extHigh",
+        help="What is the *higher* value of the density profile slices corresponding to the "
+        "dilute regime? e.g. in a box with 100 slices in the density, this value could be `15`.",
         required=True, type=int)
 parser.add_argument("-sl", 
         help="How many slices do you want to divide the density profile into? This parameter "
         "will be passed into the `gmx_density -sl` function",
         required=True, type=int)
-parser.add_argument("-center", 
-                    help="The location of the center of the ")
-
+        
 
 args = parser.parse_args()
 
