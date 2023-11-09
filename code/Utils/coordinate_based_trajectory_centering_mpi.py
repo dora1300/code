@@ -80,9 +80,9 @@ def check_density(FILENAME, low_point, high_point):
     exterior = []; interior = []
     for i, dens in enumerate(densities):
         # more strict check for what constitutes the edge of the box
-        if i < low_point:
+        if i < low_point-5:
             exterior.append(dens)
-        elif i >= high_point:
+        elif i >= high_point+5:
             exterior.append(dens)
         else:
             interior.append(dens)
