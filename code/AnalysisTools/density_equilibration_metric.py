@@ -9,7 +9,7 @@ density' and 'low density' region, then plot over time. This will be useful for 
 a stable density equilibrium in the simulation and will help in the decision of what is or is not phase separated.
 
 @Updates:
-
+2023 11 20          Somehow I had the path to the analysis code hardcoded. That's insane. Fixed that nonsense today.
 """
 import argparse
 
@@ -37,6 +37,11 @@ parser.add_argument('-low', help='The z-regions that correspond to the low densi
 parser.add_argument('-image', help="Name for the output graph of density vs time. Please include extension!",
                     default="output.png")
 parser.add_argument('-title', help="ID to include in the density vs time plot.", default=None)
+parser.add_argument('-codepath', help="The path where the main code repo is located. Provide the full path "
+                    "please. Only provide UP TO the repo, but do not include the actual code directory name. "
+                    "e.g. you could provide /home/${USER} if the code directory lives in /home/${USER}/code."
+                    " Don't actually type ${USER}, though, just fill in your actual username.",
+                    required=True, type=str)
 
 
 args = parser.parse_args()
@@ -44,6 +49,7 @@ args = parser.parse_args()
 xtc = args.t
 tpr = args.s
 dt = args.dt
+path = args.codepath
 
 high_z_lim = args.high; low_z_lim = args.low
 assert len(high_z_lim) == 2, "Region for high density is not 2 values. Try again!"
@@ -64,7 +70,7 @@ for time in time_array:
     subprocess.check_output(gmx_density.split(), stdin=dens_input.stdout)
     dens_input.wait()
 
-    convert_xvg = f"python3 /home/mando/Code/Utils/xvg2csv.py -f ./temp_dens/frame{TIME}.xvg -o ./temp_dens/frame{TIME}.csv"
+    convert_xvg = f"python3 {path}/Utils/xvg2csv.py -f ./temp_dens/frame{TIME}.xvg -o ./temp_dens/frame{TIME}.csv"
     subprocess.call(convert_xvg.split())
 
     with open(f"./temp_dens/frame{TIME}.csv") as f:
