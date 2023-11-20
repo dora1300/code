@@ -70,7 +70,7 @@ for time in time_array:
     subprocess.check_output(gmx_density.split(), stdin=dens_input.stdout)
     dens_input.wait()
 
-    convert_xvg = f"python3 {path}/Utils/xvg2csv.py -f ./temp_dens/frame{TIME}.xvg -o ./temp_dens/frame{TIME}.csv"
+    convert_xvg = f"python3 {path}/code/code/Utils/xvg2csv.py -f ./temp_dens/frame{TIME}.xvg -o ./temp_dens/frame{TIME}.csv"
     subprocess.call(convert_xvg.split())
 
     with open(f"./temp_dens/frame{TIME}.csv") as f:
