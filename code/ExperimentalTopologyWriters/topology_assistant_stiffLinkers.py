@@ -216,8 +216,8 @@ coil_model     4
             if i3 == (len(segments_list)-1):
                 continue
             else:
-                angle_information += f" {coil_stop - 1}    {coil_stop}    {coil_stop + 1}     1       {THETA_HELIX}        {THETA_LINK_FORCE}  ; angle theta^'_CL\n"
-                angle_information += f" {coil_stop}    {coil_stop + 1}    {coil_stop + 2}     1       {THETA_HELIX}        {THETA_LINK_FORCE}  ; angle theta^''_CL\n"
+                angle_information += f" {coil_stop - 1}    {coil_stop}    {coil_stop + 1}     1       {THETA_HELIX}        {SPECIAL_THETA_LINK_FORCE}  ; angle theta^'_CL\n"
+                angle_information += f" {coil_stop}    {coil_stop + 1}    {coil_stop + 2}     1       {THETA_HELIX}        {SPECIAL_THETA_LINK_FORCE}  ; angle theta^''_CL\n"
         else:
             linker_start = positions_list[i3][0]
             linker_stop = positions_list[i3][1]
@@ -231,8 +231,8 @@ coil_model     4
             if i3 == (len(segments_list)-1):    # stop if I'm at the end of the model obviously
                 continue
             else:
-                angle_information += f" {linker_stop - 1}    {linker_stop}    {linker_stop + 1}     1       {THETA_HELIX}        {THETA_LINK_FORCE}  ; angle theta^'_LC\n"
-                angle_information += f" {linker_stop}    {linker_stop + 1}    {linker_stop + 2}     1       {THETA_HELIX}        {THETA_LINK_FORCE}  ; angle theta^''_LC\n"
+                angle_information += f" {linker_stop - 1}    {linker_stop}    {linker_stop + 1}     1       {THETA_HELIX}        {SPECIAL_THETA_LINK_FORCE}  ; angle theta^'_LC\n"
+                angle_information += f" {linker_stop}    {linker_stop + 1}    {linker_stop + 2}     1       {THETA_HELIX}        {SPECIAL_THETA_LINK_FORCE}  ; angle theta^''_LC\n"
 
 
     # now it's time to handle the dihedrals!
@@ -257,9 +257,9 @@ coil_model     4
             if i4 == (len(segments_list)-1):
                 continue
             else:
-                dihedral_information += f" {coil_d_stop - 2}   {coil_d_stop - 1}   {coil_d_stop}   {coil_d_stop + 1}    1     {ALPHA1_HELIX}        {ALPHA1_LINK_FORCE}      1  ; angle alpha^0_C\n"
-                dihedral_information += f" {coil_d_stop - 1}   {coil_d_stop}   {coil_d_stop + 1}   {coil_d_stop + 2}    1     {ALPHA1_HELIX}        {ALPHA1_LINK_FORCE}      1  ; angle alpha^'_CL\n"
-                dihedral_information += f" {coil_d_stop}   {coil_d_stop + 1}   {coil_d_stop + 2}   {coil_d_stop + 3}    1     {ALPHA1_HELIX}        {ALPHA1_LINK_FORCE}      1  ; angle alpha^''_CL\n"
+                dihedral_information += f" {coil_d_stop - 2}   {coil_d_stop - 1}   {coil_d_stop}   {coil_d_stop + 1}    1     {ALPHA1_HELIX}        {SPECIAL_ALPHA1_LINK_FORCE}      1  ; angle alpha^0_C\n"
+                dihedral_information += f" {coil_d_stop - 1}   {coil_d_stop}   {coil_d_stop + 1}   {coil_d_stop + 2}    1     {ALPHA1_HELIX}        {SPECIAL_ALPHA1_LINK_FORCE}      1  ; angle alpha^'_CL\n"
+                dihedral_information += f" {coil_d_stop}   {coil_d_stop + 1}   {coil_d_stop + 2}   {coil_d_stop + 3}    1     {ALPHA1_HELIX}        {SPECIAL_ALPHA1_LINK_FORCE}      1  ; angle alpha^''_CL\n"
         else:
             link_d_start = positions_list[i4][0]
             link_d_stop = positions_list[i4][1]
@@ -274,9 +274,9 @@ coil_model     4
             if i4 == (len(segments_list)-1):
                 continue
             else:
-                dihedral_information += f" {link_d_stop - 2}   {link_d_stop - 1}   {link_d_stop}   {link_d_stop + 1}    1     {ALPHA1_HELIX}        {ALPHA1_LINK_FORCE}      1  ; angle alpha^0_C\n"
-                dihedral_information += f" {link_d_stop - 1}   {link_d_stop}   {link_d_stop + 1}   {link_d_stop + 2}    1     {ALPHA1_HELIX}        {ALPHA1_LINK_FORCE}      1  ; angle alpha^'_CL\n"
-                dihedral_information += f" {link_d_stop}   {link_d_stop + 1}   {link_d_stop + 2}   {link_d_stop + 3}    1     {ALPHA1_HELIX}        {ALPHA1_LINK_FORCE}      1  ; angle alpha^''_CL\n"
+                dihedral_information += f" {link_d_stop - 2}   {link_d_stop - 1}   {link_d_stop}   {link_d_stop + 1}    1     {ALPHA1_HELIX}        {SPECIAL_ALPHA1_LINK_FORCE}      1  ; angle alpha^0_C\n"
+                dihedral_information += f" {link_d_stop - 1}   {link_d_stop}   {link_d_stop + 1}   {link_d_stop + 2}    1     {ALPHA1_HELIX}        {SPECIAL_ALPHA1_LINK_FORCE}      1  ; angle alpha^'_CL\n"
+                dihedral_information += f" {link_d_stop}   {link_d_stop + 1}   {link_d_stop + 2}   {link_d_stop + 3}    1     {ALPHA1_HELIX}        {SPECIAL_ALPHA1_LINK_FORCE}      1  ; angle alpha^''_CL\n"
 
     dihedral_information += f";    multiplicity = 3\n"
 
@@ -295,9 +295,9 @@ coil_model     4
             if i4 == (len(segments_list)-1):
                 continue
             else:
-                dihedral_information += f" {coil_d_stop - 2}   {coil_d_stop - 1}   {coil_d_stop}   {coil_d_stop + 1}    1     {ALPHA3_HELIX}        {ALPHA3_LINK_FORCE}      3  ; angle alpha^0_C\n"
-                dihedral_information += f" {coil_d_stop - 1}   {coil_d_stop}   {coil_d_stop + 1}   {coil_d_stop + 2}    1     {ALPHA3_HELIX}        {ALPHA3_LINK_FORCE}      3  ; angle alpha^'_CL\n"
-                dihedral_information += f" {coil_d_stop}   {coil_d_stop + 1}   {coil_d_stop + 2}   {coil_d_stop + 3}    1     {ALPHA3_HELIX}        {ALPHA3_LINK_FORCE}      3  ; angle alpha^''_CL\n"
+                dihedral_information += f" {coil_d_stop - 2}   {coil_d_stop - 1}   {coil_d_stop}   {coil_d_stop + 1}    1     {ALPHA3_HELIX}        {SPECIAL_ALPHA3_LINK_FORCE}      3  ; angle alpha^0_C\n"
+                dihedral_information += f" {coil_d_stop - 1}   {coil_d_stop}   {coil_d_stop + 1}   {coil_d_stop + 2}    1     {ALPHA3_HELIX}        {SPECIAL_ALPHA3_LINK_FORCE}      3  ; angle alpha^'_CL\n"
+                dihedral_information += f" {coil_d_stop}   {coil_d_stop + 1}   {coil_d_stop + 2}   {coil_d_stop + 3}    1     {ALPHA3_HELIX}        {SPECIAL_ALPHA3_LINK_FORCE}      3  ; angle alpha^''_CL\n"
         else:
             link_d_start = positions_list[i4][0]
             link_d_stop = positions_list[i4][1]
@@ -312,9 +312,9 @@ coil_model     4
             if i4 == (len(segments_list)-1):
                 continue
             else:
-                dihedral_information += f" {link_d_stop - 2}   {link_d_stop - 1}   {link_d_stop}   {link_d_stop + 1}    1     {ALPHA3_HELIX}        {ALPHA3_LINK_FORCE}      3  ; angle alpha^0_C\n"
-                dihedral_information += f" {link_d_stop - 1}   {link_d_stop}   {link_d_stop + 1}   {link_d_stop + 2}    1     {ALPHA3_HELIX}        {ALPHA3_LINK_FORCE}      3  ; angle alpha^'_CL\n"
-                dihedral_information += f" {link_d_stop}   {link_d_stop + 1}   {link_d_stop + 2}   {link_d_stop + 3}    1     {ALPHA3_HELIX}        {ALPHA3_LINK_FORCE}      3  ; angle alpha^''_CL\n"
+                dihedral_information += f" {link_d_stop - 2}   {link_d_stop - 1}   {link_d_stop}   {link_d_stop + 1}    1     {ALPHA3_HELIX}        {SPECIAL_ALPHA3_LINK_FORCE}      3  ; angle alpha^0_C\n"
+                dihedral_information += f" {link_d_stop - 1}   {link_d_stop}   {link_d_stop + 1}   {link_d_stop + 2}    1     {ALPHA3_HELIX}        {SPECIAL_ALPHA3_LINK_FORCE}      3  ; angle alpha^'_CL\n"
+                dihedral_information += f" {link_d_stop}   {link_d_stop + 1}   {link_d_stop + 2}   {link_d_stop + 3}    1     {ALPHA3_HELIX}        {SPECIAL_ALPHA3_LINK_FORCE}      3  ; angle alpha^''_CL\n"
 
 
     # NOW -- BIG FINALE -- write all the parts to a file
@@ -544,8 +544,11 @@ ALPHA3_HELIX = -30.0
 ALPHA3_HELIX_FORCE = 20
 
 THETA_LINK_FORCE = 50 * DAMP
+SPECIAL_THETA_LINK_FORCE = 50 * 0.01
 ALPHA1_LINK_FORCE = 20 * DAMP
+SPECIAL_ALPHA1_LINK_FORCE = 20 * 0.01
 ALPHA3_LINK_FORCE = 20 * DAMP
+SPECIAL_ALPHA3_LINK_FORCE = 20 * 0.01
 
 
 
