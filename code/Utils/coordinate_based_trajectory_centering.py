@@ -42,7 +42,7 @@ def read_density(FILENAME, low_point, high_point):
    
     exterior = []; interior = []
     for i, dens in enumerate(densities):
-        if i < low_point:
+        if i <= low_point:
             exterior.append(dens)
         elif i >= high_point:
             exterior.append(dens)
@@ -51,6 +51,7 @@ def read_density(FILENAME, low_point, high_point):
     
     ext_max = np.max(np.array(exterior))
     int_max  = np.max(np.array(interior))
+    # Here is where the decision in box type lies
     if (ext_max / int_max) > 0.75 and (ext_max / int_max) < 1.25:
         box_center = "rect"
     elif (int_max / ext_max) >= 1.25:
@@ -80,7 +81,7 @@ def check_density(FILENAME, low_point, high_point):
     exterior = []; interior = []
     for i, dens in enumerate(densities):
         # more strict check for what constitutes the edge of the box
-        if i < low_point-5:
+        if i <= low_point-5:
             exterior.append(dens)
         elif i >= high_point+5:
             exterior.append(dens)
@@ -90,7 +91,8 @@ def check_density(FILENAME, low_point, high_point):
     ext_max = np.max(np.array(exterior))
     int_max  = np.max(np.array(interior))
 
-    # Here is the return statement. Return 0 == the interior has the highest density
+    # Here is the return statement. 
+    # Return 0 == the interior has the highest density
     # Return 1 == the exterior has the highest density.
     if (int_max / ext_max) > 0.90 and (int_max / ext_max) < 1.10:
         # interior has higher density, but barely (within acceptable error)
@@ -140,11 +142,17 @@ parser.add_argument('-tu',
         required=True, type=str)
 parser.add_argument("-extLow",
         help="What is the *lower* value of the density profile slices corresponding to the "
-        "dilute regime? e.g. in a box with 100 slices in the density, this value could be `15`.",
+        "dilute regime? e.g. in a box with 100 slices in the density, this value could be `15`."
+        " IMPORTANTLY -- this is NOT the value of the box dimensions in nm or distance. This is "
+        "essentially the number of slices from (0, extLow) that constitutes the dilute "
+        "regime.",
         required=True, type=int)
 parser.add_argument("-extHigh",
         help="What is the *higher* value of the density profile slices corresponding to the "
-        "dilute regime? e.g. in a box with 100 slices in the density, this value could be `15`.",
+        "dilute regime? e.g. in a box with 100 slices in the density, this value could be `75`."
+        " IMPORTANTLY -- this is NOT the value of the box dimensions in nm or distance. This is "
+        "essentially the number of slices from (extHigh, N_slices) that constitutes the dilute "
+        "regime.",
         required=True, type=int)
 parser.add_argument("-sl", 
         help="How many slices do you want to divide the density profile into? This parameter "
