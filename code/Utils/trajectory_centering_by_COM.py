@@ -160,7 +160,6 @@ for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
         # So instead, I will still do a translation, but calculate the COM of the entire SYSTEM
         print(f"Frame time {FRAME}{TIME_UNIT} failed to calculate the cluster size. Moving on in the analysis.")
         os.chdir("../")
-        remove_files()
 
         # Step 2a - No making a specific index file. Just save the frame!
         no_cluster_frame = (f"echo 1 | gmx trjconv -f {TRAJ} -s {TPR} "
@@ -190,8 +189,17 @@ for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
 
 
     # proceed with the rest of the code if the clustsize DOESNT throw an error
+    try:
+        os.remove("avclust.xvg")
+        os.remove("csize.xpm")
+        os.remove("csizew.xpm")
+        os.remove("histo-clust.xvg")
+        os.remove("maxclust.xvg")
+        os.remove("nclust.xvg")
+        os.remove("temp.xvg")
+    except:
+        pass
     os.chdir("../")
-    remove_files()
 
 
     # Step 2 -- save an .xtc file of ONLY THE CLUSTER, using the output from clustsize
