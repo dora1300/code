@@ -1,7 +1,7 @@
 """
-Name:               trajectory_centering_by_COM.py
+Name:               trajectory_centering_by_COM_mpi.py
 Author:             Dominique A Ramirez
-Date:               2024 01 16
+Date:               2024 01 28
 
 This script performs centering on a trajectory so that the slab, if one exists, is at the center
 of the box in all specified frames.
@@ -20,6 +20,9 @@ for each frame...
     `gmx trjconv -trans transx transy transz`
 - Once finished, compile all of the trajectory files into a single .xtc
 
+
+
+This is specifically for MPI parallelized versions of GROMACS, for the CU Alpine HPC
 
 Updates:
 """
@@ -176,7 +179,7 @@ for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
     # Step 1 -- calculate the clustsize to determine the biggest cluster, if it exists,
     # and save the cluster index file of the largest cluster
     os.chdir("./cluster_analysis/")
-    clustsize = (f"gmx clustsize -f ../{TRAJ} -s ../{TPR} "
+    clustsize = (f"mpirun -np 1 gmx_mpi clustsize -f ../{TRAJ} -s ../{TPR} "
                  f"-mcn ../index_files/max_{FRAME}{TIME_UNIT}.ndx " 
                  f"-b {FRAME} -e {FRAME} -tu {TIME_UNIT} -mol -cut 0.9 -pbc")
     try:
@@ -194,7 +197,7 @@ for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
         remove_files()
 
         # Step 2a - No making a specific index file. Just save the frame!
-        no_cluster_frame = (f"echo 1 | gmx trjconv -f {TRAJ} -s {TPR} "
+        no_cluster_frame = (f"echo 1 | mpirun -np 1 gmx_mpi trjconv -f {TRAJ} -s {TPR} "
             f"-b {FRAME} -e {FRAME} -tu {TIME_UNIT} "
             f"-o ./clust_none_traj/frame_{FRAME}{TIME_UNIT}_clust_none.xtc")
         subprocess.call(no_cluster_frame, shell=True)
@@ -212,7 +215,7 @@ for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
         # Step 5 -- make a new .xtc for just the given frame but TRANSLATE the ENTIRE SYSTEM
         # by the difference calculated in step 4
         # again, NO CENTERING
-        translated_no_cluster_frame = (f"echo 0 | gmx trjconv -f {TRAJ} -s {TPR} "
+        translated_no_cluster_frame = (f"echo 0 | mpirun -np 1 gmx_mpi trjconv -f {TRAJ} -s {TPR} "
             f"-b {FRAME} -e {FRAME} -tu {TIME_UNIT} "
             f"-trans {transX} {transY} {transZ} "
             f"-o ./translated_trajs/frame_{FRAME}{TIME_UNIT}_transl.xtc")
@@ -234,14 +237,14 @@ for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
     os.chdir("../")
     # now save out the .xtc file corresponding to only the cluster. ABSOLUTELY NOOOOOOOOOO
     # CENTERING
-    only_cluster_frame = (f"echo 10 | gmx trjconv -f {TRAJ} -s {TPR} "
+    only_cluster_frame = (f"echo 10 | mpirun -np 1 gmx_mpi trjconv -f {TRAJ} -s {TPR} "
             f"-b {FRAME} -e {FRAME} -tu {TIME_UNIT} "
             f"-n ./index_files/all_{FRAME}{TIME_UNIT}.ndx "
             f"-o ./clust_only_traj/frame_{FRAME}{TIME_UNIT}_clust_only.xtc")
     subprocess.call(only_cluster_frame, shell=True)
     # I also have to save a corresponding .gro file for this so that I can use it for the
     # mdtraj step
-    only_cluster_gro = (f"echo 10 | gmx trjconv -f {TRAJ} -s {TPR} "
+    only_cluster_gro = (f"echo 10 | mpirun -np 1 gmx_mpi trjconv -f {TRAJ} -s {TPR} "
             f"-b {FRAME} -e {FRAME} -tu {TIME_UNIT} "
             f"-n ./index_files/all_{FRAME}{TIME_UNIT}.ndx "
             f"-o ./clust_only_traj/frame_{FRAME}{TIME_UNIT}_clust_only.gro")
@@ -264,7 +267,7 @@ for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
     # Step 5 -- make a new .xtc for just the given frame but TRANSLATE the ENTIRE SYSTEM
     # by the difference calculated in step 4
     # again, NO CENTERING
-    translated_frame = (f"echo 0 | gmx trjconv -f {TRAJ} -s {TPR} "
+    translated_frame = (f"echo 0 | mpirun -np 1 gmx_mpi trjconv -f {TRAJ} -s {TPR} "
             f"-b {FRAME} -e {FRAME} -tu {TIME_UNIT} "
             f"-trans {transX} {transY} {transZ} "
             f"-o ./translated_trajs/frame_{FRAME}{TIME_UNIT}_transl.xtc")
