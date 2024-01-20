@@ -201,7 +201,7 @@ for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
                 f"-b {FRAME} -e {FRAME} -tu {TIME_UNIT} "
                 f"-pbc mol -ur compact -center -boxcenter rect "
                 f"-o ./stepA_wholesys_mod_noclust/frame_{FRAME}{TIME_UNIT}_whole_sys.gro")
-        subprocess.call(wholesys_noclust_xtc, shell=True)
+        subprocess.call(wholesys_noclust_gro, shell=True)
 
 
         # Step 3a - calculate the COM of the no cluster frame and determine the translational moves
