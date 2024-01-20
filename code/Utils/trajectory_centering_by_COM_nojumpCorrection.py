@@ -111,7 +111,6 @@ args = parser.parse_args()
 
 TRAJ = args.t
 TPR = args.s
-TOP = args.p
 
 BOXX = args.boxX
 BOXY = args.boxY
