@@ -106,7 +106,7 @@ parser.add_argument('-tu',
         required=True, type=str)
 parser.add_argument('-mpi',
         help="Pass this flag to turn on the mpi settings for all the gmx functions",
-        action="store_true"
+        action="store_true",
         default=False)
         
 
