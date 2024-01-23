@@ -26,7 +26,6 @@ Updates:
 
 import subprocess
 import os
-import numpy as np
 import argparse
 import mdtraj as md
 
@@ -105,6 +104,10 @@ parser.add_argument('-tu',
         help="Time unit for the start and stop times. Must the same time unit for both times. "
         "Accepted values are 'ps' , 'ns' , 'us' ",
         required=True, type=str)
+parser.add_argument('-mpi',
+        help="Pass this flag to turn on the mpi settings for all the gmx functions",
+        action="store_true"
+        default=False)
         
 
 args = parser.parse_args()
@@ -136,6 +139,13 @@ else:
     print("Please try again and choose only an acceptable value for `-tu`")
     print("(your provided value: {args.tu})")
     exit(1)
+
+
+# Handle what kind of function to call, gmx or gmx_mpi
+if args.mpi:
+    FUNC = "mpirun -np 1 gmx_mpi"
+else:
+    FUNC = "gmx"
 
 
 # This is just a silly print statement to make the user see what parameters are chosen
@@ -170,7 +180,7 @@ for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
     # Step 1 -- calculate the clustsize to determine the biggest cluster, if it exists,
     # and save the cluster index file of the largest cluster
     os.chdir("./cluster_analysis/")
-    clustsize = (f"mpirun -np 1 gmx_mpi clustsize -f ../{TRAJ} -s ../{TPR} "
+    clustsize = (f"{FUNC} clustsize -f ../{TRAJ} -s ../{TPR} "
                  f"-mcn ../index_files/max_{FRAME}{TIME_UNIT}.ndx " 
                  f"-b {FRAME} -e {FRAME} -tu {TIME_UNIT} -mol -cut 0.9 -pbc")
     try:
@@ -178,28 +188,115 @@ for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
         # and produce some output from the clustsize analysis
         subprocess.run(clustsize.split(), check=True)
     except:
-        # The time this will fail is if EVERY molecule is in a single cluster, i.e.
+        # Updated 01.22.24
+        # The time this will fail is if ALMOST EVERY molecule is in a single cluster, i.e.
         # when all molecules are dispersed and not touching each other, which
         # gmx clustsize doesn't like. 
-        # So instead, I will still do a translation, but calculate the COM of the entire SYSTEM
-        print(f"Frame time {FRAME}{TIME_UNIT} failed to calculate the cluster size ")
-        print("Continuing with analysis using the entire system to reposition.")
+        # BUT, sometimes it will give an error and still make an index file if there's, like,
+        # 99% of molecules in a single cluster then 1% in a smaller cluster
+        # so I'm changing the exception checking
+        print(f"Frame time {FRAME}{TIME_UNIT} produced an error with gmx clustsize ")
+        print("Continuing with analysis and will check if an index file was still created.")
+
+
+    # clean up the cluster_analysis files regardless of what happens
+    os.chdir("../")
+    remove_files()
+
+
+    # Check to verify if gmx clustsize produced the expected max_{FRAME}{TIME_UNIT}.ndx index
+    # file in the index_files directory. Sometimes, even if clustsize errors out, the index
+    # file will still be created and I need to handle that.
+    # notice that I'm in the head directory at this point, just as I should be
+    if os.path.isfile(f"./index_files/max_{FRAME}{TIME_UNIT}.ndx"):
+        # Make an index file specific for the largest cluster for use down the road
+        os.chdir("./index_files/")
+        concat = f"cat standard.ndx max_{FRAME}{TIME_UNIT}.ndx >> all_{FRAME}{TIME_UNIT}.ndx"
+        subprocess.call(concat, shell=True)
         os.chdir("../")
-        remove_files()
 
 
+        # Export the entire system with modifications, starting from the nojump_whole traj
+        # this will be important for later
+        # this step DOES use centering
+        wholesys_export = (f"echo 10 0 | {FUNC} trjconv -f {TRAJ} -s {TPR} "
+                    f"-b {FRAME} -e {FRAME} -tu {TIME_UNIT} "
+                    f"-pbc mol -ur compact -center -boxcenter tric "
+                    f"-n ./index_files/all_{FRAME}{TIME_UNIT}.ndx "
+                    f"-o ./stepA_wholesys_mod/frame_{FRAME}{TIME_UNIT}_whole_sys.xtc")
+        subprocess.call(wholesys_export, shell=True)
+
+
+        # export ONLY the largest cluster from the same frame, which will be important
+        # for calculating the COM of the cluster
+        # this step ALSO uses centering
+        # removed the "-center -boxcenter tric" part of the trajectory conversion
+        cluster_export_xtc = (f"echo 10 10 | {FUNC} trjconv -f {TRAJ} -s {TPR} "
+                    f"-b {FRAME} -e {FRAME} -tu {TIME_UNIT} "
+                    f"-pbc mol -ur compact "
+                    f"-n ./index_files/all_{FRAME}{TIME_UNIT}.ndx "
+                    f"-o ./stepB_cluster_mod/frame_{FRAME}{TIME_UNIT}_cluster.xtc")
+        subprocess.call(cluster_export_xtc, shell=True)
+        cluster_export_gro = (f"echo 10 10 | {FUNC} trjconv -f {TRAJ} -s {TPR} "
+                    f"-b {FRAME} -e {FRAME} -tu {TIME_UNIT} "
+                    f"-pbc mol -ur compact "
+                    f"-n ./index_files/all_{FRAME}{TIME_UNIT}.ndx "
+                    f"-o ./stepB_cluster_mod/frame_{FRAME}{TIME_UNIT}_cluster.gro")
+        subprocess.call(cluster_export_gro, shell=True)
+
+
+        # calculate the COM of the cluster and determine the translational moves
+        clust_TOP = f"./stepB_cluster_mod/frame_{FRAME}{TIME_UNIT}_cluster.gro"
+        traj_clust_frame = md.load(f"./stepB_cluster_mod/frame_{FRAME}{TIME_UNIT}_cluster.xtc", 
+                                top=clust_TOP)
+        clust_only_COM = md.compute_center_of_mass(traj_clust_frame)
+
+        transX = BOXX - clust_only_COM[0][0]
+        transY = BOXY - clust_only_COM[0][1]
+        transZ = BOXZ - clust_only_COM[0][2]
+
+        
+        # translate the modified whole system from above (see step A) using the translation
+        # steps calculated directly above
+        # AND perform PBC corrections on this
+        translated_frame = (f"echo 0 | {FUNC} trjconv "
+                f"-f ./stepA_wholesys_mod/frame_{FRAME}{TIME_UNIT}_whole_sys.xtc " 
+                f"-s {TPR} "
+                f"-trans {transX} {transY} {transZ} "
+                f"-pbc mol "
+                f"-o ./translated_trajs/frame_{FRAME}{TIME_UNIT}_transl.xtc")
+        subprocess.call(translated_frame, shell=True)
+
+
+        ## DEBUG
+        # this is a debug step, to see if my procedure is even working
+        # I am going to translate only the largest cluster to make a cluster only trajectory
+        # to see if the PBC things I'm doing is even correct
+        translated_cluster = (f"echo 10 | {FUNC} trjconv "
+                f"-f ./stepA_wholesys_mod/frame_{FRAME}{TIME_UNIT}_whole_sys.xtc " 
+                f"-s {TPR} "
+                f"-trans {transX} {transY} {transZ} "
+                f"-n ./index_files/all_{FRAME}{TIME_UNIT}.ndx "
+                f"-pbc mol "
+                f"-o ./translated_cluster_trajs/frame_{FRAME}{TIME_UNIT}_transl_cluster.gro")
+        subprocess.call(translated_cluster, shell=True)
+        continue
+
+
+    else:
         # Export the entire system but still do centering and what not to be consistent
         # with the other steps
         # and since theres separate cluster file, I will save out xtc and gro from this
         # step and calculate the COM on it
-        wholesys_noclust_xtc = (f"echo 0 0 | mpirun -np 1 gmx_mpi trjconv -f {TRAJ} -s {TPR} "
+        # removed the "-center -boxcenter tric" part of the trajectory conversion
+        wholesys_noclust_xtc = (f"echo 0 0 | {FUNC} trjconv -f {TRAJ} -s {TPR} "
                 f"-b {FRAME} -e {FRAME} -tu {TIME_UNIT} "
-                f"-pbc mol -ur compact -center -boxcenter tric "
+                f"-pbc mol -ur compact "
                 f"-o ./stepA_wholesys_mod_noclust/frame_{FRAME}{TIME_UNIT}_whole_sys.xtc")
         subprocess.call(wholesys_noclust_xtc, shell=True)
-        wholesys_noclust_gro = (f"echo 0 0 | mpirun -np 1 gmx_mpi trjconv -f {TRAJ} -s {TPR} "
+        wholesys_noclust_gro = (f"echo 0 0 | {FUNC} trjconv -f {TRAJ} -s {TPR} "
                 f"-b {FRAME} -e {FRAME} -tu {TIME_UNIT} "
-                f"-pbc mol -ur compact -center -boxcenter tric "
+                f"-pbc mol -ur compact "
                 f"-o ./stepA_wholesys_mod_noclust/frame_{FRAME}{TIME_UNIT}_whole_sys.gro")
         subprocess.call(wholesys_noclust_gro, shell=True)
 
@@ -217,7 +314,7 @@ for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
 
         # now, using the translational moves, translate the .xtc file generated above 
         # and perform pbc corrections on it!
-        translated_noclust_frame = (f"echo 0 | mpirun -np 1 gmx_mpi trjconv "
+        translated_noclust_frame = (f"echo 0 | {FUNC} trjconv "
             f"-f ./stepA_wholesys_mod_noclust/frame_{FRAME}{TIME_UNIT}_whole_sys.xtc " 
             f"-s {TPR} "
             f"-trans {transX} {transY} {transZ} "
@@ -229,89 +326,11 @@ for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
         # this is a debug step, to see if my procedure is even working
         # I am going to translate only the largest cluster to make a cluster only trajectory
         # to see if the PBC things I'm doing is even correct
-        translated_noclust_frame_cluster = (f"echo 0 | mpirun -np 1 gmx_mpi trjconv "
+        translated_noclust_frame_cluster = (f"echo 0 | {FUNC} trjconv "
             f"-f ./stepA_wholesys_mod_noclust/frame_{FRAME}{TIME_UNIT}_whole_sys.xtc " 
             f"-s {TPR} "
             f"-trans {transX} {transY} {transZ} "
             f"-pbc mol "
-            f"-o ./translated_cluster_trajs/frame_{FRAME}{TIME_UNIT}_transl_cluster.xtc")
+            f"-o ./translated_cluster_trajs/frame_{FRAME}{TIME_UNIT}_transl_cluster.gro")
         subprocess.call(translated_noclust_frame_cluster, shell=True)
-        continue
-
-
-    # proceed with the rest of the code if the clustsize DOESNT throw an error
-    os.chdir("../")
-    remove_files()
-
-
-    # Make an index file specific for the largest cluster for use down the road
-    os.chdir("./index_files/")
-    concat = f"cat standard.ndx max_{FRAME}{TIME_UNIT}.ndx >> all_{FRAME}{TIME_UNIT}.ndx"
-    subprocess.call(concat, shell=True)
-    os.chdir("../")
-
-
-    # Export the entire system with modifications, starting from the nojump_whole traj
-    # this will be important for later
-    # this step DOES use centering
-    wholesys_export = (f"echo 10 0 | mpirun -np 1 gmx_mpi trjconv -f {TRAJ} -s {TPR} "
-                f"-b {FRAME} -e {FRAME} -tu {TIME_UNIT} "
-                f"-pbc mol -ur compact -center -boxcenter tric "
-                f"-n ./index_files/all_{FRAME}{TIME_UNIT}.ndx "
-                f"-o ./stepA_wholesys_mod/frame_{FRAME}{TIME_UNIT}_whole_sys.xtc")
-    subprocess.call(wholesys_export, shell=True)
-
-
-    # export ONLY the largest cluster from the same frame, which will be important
-    # for calculating the COM of the cluster
-    # this step ALSO uses centering
-    cluster_export_xtc = (f"echo 10 10 | mpirun -np 1 gmx_mpi trjconv -f {TRAJ} -s {TPR} "
-                f"-b {FRAME} -e {FRAME} -tu {TIME_UNIT} "
-                f"-pbc mol -ur compact -center -boxcenter tric "
-                f"-n ./index_files/all_{FRAME}{TIME_UNIT}.ndx "
-                f"-o ./stepB_cluster_mod/frame_{FRAME}{TIME_UNIT}_cluster.xtc")
-    subprocess.call(cluster_export_xtc, shell=True)
-    cluster_export_gro = (f"echo 10 10 | mpirun -np 1 gmx_mpi trjconv -f {TRAJ} -s {TPR} "
-                f"-b {FRAME} -e {FRAME} -tu {TIME_UNIT} "
-                f"-pbc mol -ur compact -center -boxcenter tric "
-                f"-n ./index_files/all_{FRAME}{TIME_UNIT}.ndx "
-                f"-o ./stepB_cluster_mod/frame_{FRAME}{TIME_UNIT}_cluster.gro")
-    subprocess.call(cluster_export_gro, shell=True)
-
-
-    # calculate the COM of the cluster and determine the translational moves
-    clust_TOP = f"./stepB_cluster_mod/frame_{FRAME}{TIME_UNIT}_cluster.gro"
-    traj_clust_frame = md.load(f"./stepB_cluster_mod/frame_{FRAME}{TIME_UNIT}_cluster.xtc", 
-                               top=clust_TOP)
-    clust_only_COM = md.compute_center_of_mass(traj_clust_frame)
-
-    transX = BOXX - clust_only_COM[0][0]
-    transY = BOXY - clust_only_COM[0][1]
-    transZ = BOXZ - clust_only_COM[0][2]
-
-    
-    # translate the modified whole system from above (see step A) using the translation
-    # steps calculated directly above
-    # AND perform PBC corrections on this
-    translated_frame = (f"echo 0 | mpirun -np 1 gmx_mpi trjconv "
-            f"-f ./stepA_wholesys_mod/frame_{FRAME}{TIME_UNIT}_whole_sys.xtc " 
-            f"-s {TPR} "
-            f"-trans {transX} {transY} {transZ} "
-            f"-pbc mol "
-            f"-o ./translated_trajs/frame_{FRAME}{TIME_UNIT}_transl.xtc")
-    subprocess.call(translated_frame, shell=True)
-
-
-    ## DEBUG
-    # this is a debug step, to see if my procedure is even working
-    # I am going to translate only the largest cluster to make a cluster only trajectory
-    # to see if the PBC things I'm doing is even correct
-    translated_cluster = (f"echo 10 | mpirun -np 1 gmx_mpi trjconv "
-            f"-f ./stepA_wholesys_mod/frame_{FRAME}{TIME_UNIT}_whole_sys.xtc " 
-            f"-s {TPR} "
-            f"-trans {transX} {transY} {transZ} "
-            f"-n ./index_files/all_{FRAME}{TIME_UNIT}.ndx "
-            f"-pbc mol "
-            f"-o ./translated_cluster_trajs/frame_{FRAME}{TIME_UNIT}_transl_cluster.xtc")
-    subprocess.call(translated_cluster, shell=True)
 
