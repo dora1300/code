@@ -18,7 +18,7 @@ import mdtraj as md
 
 
 def write_csv(FILENAME):
-    out_file = f"./density_untranslated/{FILENAME}.csv"
+    out_file = open(f"./density_untranslated/{FILENAME}.csv", 'w')
     with open(f"./density_untranslated/{FILENAME}.xvg", "r") as f:
         for line in f:
             if line[0] == "#":
@@ -35,6 +35,7 @@ def write_csv(FILENAME):
                     else:
                         out_file.write(f"{sp[i]}")
                 out_file.write("\n")
+    out_file.close()
     return None
 
 
