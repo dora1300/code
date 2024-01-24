@@ -17,29 +17,43 @@ import mdtraj as md
 
 
 
+def write_csv(FILENAME):
+    out_file = f"./density_untranslated/{FILENAME}.csv"
+    with open(f"./density_untranslated/{FILENAME}.xvg", "r") as f:
+        for line in f:
+            if line[0] == "#":
+                out_file.write(line)
+            elif line[0] == "@":
+                out_file.write(line)
+            else:
+                sp = line.lstrip(" ").rstrip("\n").split(" ")
+                for i in range(len(sp)):
+                    if len(sp[i]) == 0:
+                        continue
+                    elif i != (len(sp)-1):
+                        out_file.write(f"{sp[i]},")
+                    else:
+                        out_file.write(f"{sp[i]}")
+                out_file.write("\n")
+    return None
+
+
 def read_density(FILE):
     zcoord_array = np.zeros(args.sl, dtype=float)
     density_array = np.zeros(args.sl, dtype=float)
 
     with open(FILE) as f:
+        line_count = 0
         for line in f:
-            line_count = 0
             if line[0] == "#":
                 continue
             elif line[0] == "@":
                 continue
             else:
-                sp = line.lstrip(" ").rstrip("\n").split(" ")
-                data = []
-                for i in sp:
-                    if len(i) == 0:
-                        continue
-                    else:
-                        data.append(float(i))
-                zcoord_array[line_count] = data[0]
-                density_array[line_count] = data[1]
+                line_split = line.rstrip("\n").split(",")
+                zcoord_array[line_count] = float(line_split[0])
+                density_array[line_count] = float(line_split[1])
                 line_count += 1
-                data.clear()
     return zcoord_array, density_array
 
 
@@ -145,11 +159,13 @@ for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
                f"-dens number -sl {SLICE} "
                f"-o ./density_untranslated/density_{FRAME}{TIME_UNIT}.xvg")
     subprocess.call(density, shell=True)
+    # convert the file to .csv for easy reading
+    write_csv(f"density_{FRAME}{TIME_UNIT}")
 
     
     # step 2 -- read the density file and find the zcoordinate location of the max
     # density
-    zpositions, densities = read_density(f"./density_untranslated/density_{FRAME}{TIME_UNIT}.xvg")
+    zpositions, densities = read_density(f"./density_untranslated/density_{FRAME}{TIME_UNIT}.csv")
     print(zpositions)
     print(densities)
     print(np.where(densities == np.max(densities))[0][0])
