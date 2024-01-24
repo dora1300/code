@@ -140,7 +140,6 @@ print()
 for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
     # Step 1 -- calculate the density profile for the desired frame
     # and save to the special density trajectory
-    print("######################      STEP 1 - calculate the density profile for the desired frame")
     density = (f"echo 0 | {FUNC} density -f {TRAJ} -s {TPR} "
                f"-b {FRAME} -e {FRAME} "
                f"-dens number -sl {SLICE} "
@@ -153,6 +152,9 @@ for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
     zpositions, densities = read_density(f"./density_untranslated/density_{FRAME}{TIME_UNIT}.xvg")
     max_index = np.where(densities == np.max(densities))[0][0]
     trans_z_by = BOXZ - zpositions[max_index]
+
+    print(f"Slice with the largest density: {zpositions[max_index]}")
+    print(f"Translating frame {FRAME}{TIME_UNIT} by {trans_z_by}")
 
 
     # step 3 -- translate the ENTIRE system by the translation coordinates and save out using -pbc mol!
