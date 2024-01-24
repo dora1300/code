@@ -150,6 +150,9 @@ for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
     # step 2 -- read the density file and find the zcoordinate location of the max
     # density
     zpositions, densities = read_density(f"./density_untranslated/density_{FRAME}{TIME_UNIT}.xvg")
+    print(zpositions)
+    print(densities)
+    print(np.where(densities == np.max(densities))[0][0])
     max_index = np.where(densities == np.max(densities))[0][0]
     trans_z_by = BOXZ - zpositions[max_index]
 
