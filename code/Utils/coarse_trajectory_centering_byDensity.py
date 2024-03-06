@@ -3,23 +3,32 @@ Name:               coarse_trajectory_centering_byDensity.py
 Author:             Dominique A Ramirez
 Date:               2024 01 22
 
-[provide description of script here]
+This script performs what I'm calling as a "coarse trajectory centering" where a LLPS slab 
+simulation system is centered by translating the region of the highest density. The region
+of highest density is determined by a "coarse density profile" where a simulation box is
+first divided into slices of large width (approx. 15-25 nm slices). The approximate 
+z-dimensions corresponding to the highest density is then centered in the simulation box
+by translating the entire system.
+
+IMPORTANTLY -- the updated version 
 
 
 Updates:
+2024 03 04  -- updated to do coarse analysis ONLY on a system with the largest cluster.
+    Also changed one of the directory names!
 """
 
 import subprocess
 import os
 import argparse
 import numpy as np
-import mdtraj as md
+#import mdtraj as md
 
 
 
 def write_csv(FILENAME):
-    out_file = open(f"./density_untranslated/{FILENAME}.csv", 'w')
-    with open(f"./density_untranslated/{FILENAME}.xvg", "r") as f:
+    out_file = open(f"./coarse_density_profile/{FILENAME}.csv", 'w')
+    with open(f"./coarse_density_profile/{FILENAME}.xvg", "r") as f:
         for line in f:
             if line[0] == "#":
                 out_file.write(line)
@@ -57,6 +66,37 @@ def read_density(FILE):
                 line_count += 1
     return zcoord_array, density_array
 
+
+def remove_files():
+    try:
+        os.remove("./cluster_analysis/avclust.xvg")
+    except:
+        pass
+    try:
+        os.remove("./cluster_analysis/csize.xpm")
+    except:
+        pass
+    try:
+        os.remove("./cluster_analysis/csizew.xpm")
+    except:
+        pass
+    try:
+        os.remove("./cluster_analysis/histo-clust.xvg")
+    except:
+        pass
+    try:
+        os.remove("./cluster_analysis/maxclust.xvg")
+    except:
+        pass
+    try:
+        os.remove("./cluster_analysis/nclust.xvg")
+    except:
+        pass
+    try:
+        os.remove("./cluster_analysis/temp.xvg")
+    except:
+        pass
+    return None
 
 """
 Set up the argument parser and parse the arguments
@@ -99,12 +139,19 @@ parser.add_argument('-mpi',
         help="Pass this flag to turn on the mpi settings for all the gmx functions",
         action="store_true",
         default=False)
+parser.add_argument('-n',
+        help="File corresponding to the default index file (.ndx) that comes from GROMACS. "
+        "This file MUST exist in ./index_files/ in reference to where the trajectory files exist. "
+        "Please include the extension.",
+        default="standard.ndx",
+        type=str)
         
 
 args = parser.parse_args()
 
 TRAJ = args.t
 TPR = args.s
+NDX = args.n
 
 SLICE = args.sl
 BOXZ = args.boxZ
@@ -138,6 +185,36 @@ else:
     FUNC = "gmx"
 
 
+
+"""
+Critical section!
+Since I'm capturing output from the function calls, if there is an error
+I won't see it well.
+
+An easy place for this script to fail is when the necessary directories are missing.
+Check each necessary directory one by one and make sure it exists
+"""
+if os.path.isdir("index_files"):
+    pass
+else:
+    os.mkdir("index_files")
+
+if os.path.isdir("cluster_analysis"):
+    pass
+else:
+    os.mkdir("cluster_analysis")
+
+if os.path.isdir("coarse_density_profile"):
+    pass
+else:
+    os.mkdir("coarse_density_profile")
+
+if os.path.isdir("coarse_trans_traj"):
+    pass
+else:
+    os.mkdir("coarse_trans_traj")
+
+
 # This is just a silly print statement to make the user see what parameters are chosen
 # more verbosity is never a bad thing...
 print()
@@ -153,26 +230,90 @@ print()
 
 # loop through every DESIRED frame
 for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
-    # Step 1 -- calculate the density profile for the desired frame
-    # and save to the special density trajectory
-    density = (f"echo 0 | {FUNC} density -f {TRAJ} -s {TPR} "
-               f"-b {FRAME} -e {FRAME} "
-               f"-dens number -sl {SLICE} "
-               f"-o ./density_untranslated/density_{FRAME}{TIME_UNIT}.xvg")
-    subprocess.call(density, shell=True)
-    # convert the file to .csv for easy reading
-    write_csv(f"density_{FRAME}{TIME_UNIT}")
+    # Step 1 -- calculate the clustsize to determine the biggest cluster, if it exists,
+    # and save the cluster index file of the largest cluster
+    if os.path.isfile(f"./index_files/max_{FRAME}{TIME_UNIT}.ndx"):
+        # this is when I've already done the cluster analysis and make the index files 
+        # (they don't need to be remade obviously)
+        pass
+    else:
+        os.chdir("./cluster_analysis/")
+        clustsize = (f"{FUNC} clustsize -f ../{TRAJ} -s ../{TPR} "
+                    f"-mcn ../index_files/max_{FRAME}{TIME_UNIT}.ndx " 
+                    f"-b {FRAME} -e {FRAME} -tu {TIME_UNIT} -mol -cut 0.9 -pbc")
+        try:
+            # if there is a cluster that is < N_all_molecules, then this will work
+            # and produce some output from the clustsize analysis
+            subprocess.run(clustsize.split(), check=True, capture_output=True)
+        except:
+            # Updated 01.22.24
+            # The time this will fail is if ALMOST EVERY molecule is in a single cluster, i.e.
+            # when all molecules are dispersed and not touching each other, which
+            # gmx clustsize doesn't like. 
+            # BUT, sometimes it will give an error and still make an index file if there's, like,
+            # 99% of molecules in a single cluster then 1% in a smaller cluster
+            # so I'm changing the exception checking
+            print(f"Frame time {FRAME}{TIME_UNIT} produced an error with gmx clustsize ")
+            print("Continuing with analysis and will check if an index file was still created.")
+            
+        # clean up the cluster_analysis files regardless of what happens
+        os.chdir("../")
+        remove_files()
 
     
-    # step 2 -- read the density file and find the zcoordinate location of the max
-    # density
-    zpositions, densities = read_density(f"./density_untranslated/density_{FRAME}{TIME_UNIT}.csv")
+    # Check to verify if gmx clustsize produced the expected max_{FRAME}{TIME_UNIT}.ndx index
+    # file in the index_files directory. Sometimes, even if clustsize errors out, the index
+    # file will still be created and I need to handle that.
+    # notice that I'm in the head directory at this point, just as I should be
+    if os.path.isfile(f"./index_files/max_{FRAME}{TIME_UNIT}.ndx"):
+        # Make an index file specific for the largest cluster for use down the road
+        if os.path.isfile(f"./index_files/all_{FRAME}{TIME_UNIT}.ndx"):
+            pass
+        else:
+            os.chdir("./index_files/")
+            concat = f"cat {NDX} max_{FRAME}{TIME_UNIT}.ndx >> all_{FRAME}{TIME_UNIT}.ndx"
+            subprocess.run(concat, shell=True, capture_output=True)
+            os.chdir("../")
+
+        # Now, I have to set the CORRECT VARIABLE corresponding to the largest cluster
+        MAXNDX = f"max_{FRAME}{TIME_UNIT}.ndx"
+
+        # Now, run the density analysis on ONLY the largest cluster and save the output as normal
+        density = (f"echo 10 | {FUNC} density -f {TRAJ} -s {TPR} "
+                f"-n ./index_files/{MAXNDX} "
+                f"-b {FRAME} -e {FRAME} "
+                f"-dens number -sl {SLICE} "
+                f"-o ./coarse_density_profile/density_{FRAME}{TIME_UNIT}.xvg")
+        subprocess.run(density, shell=True, capture_output=True)
+        # convert the file to .csv for easy reading
+        write_csv(f"density_{FRAME}{TIME_UNIT}")
+
+    
+    else:
+        # the max_{FRAME}{TIME_UNIT}.ndx index file was not created. This means the 
+        # entire system is in a cluster and I can run the density analysis on the entire system
+        density = (f"echo 0 | {FUNC} density -f {TRAJ} -s {TPR} "
+                f"-b {FRAME} -e {FRAME} "
+                f"-dens number -sl {SLICE} "
+                f"-o ./coarse_density_profile/density_{FRAME}{TIME_UNIT}.xvg")
+        subprocess.call(density, shell=True)
+        # convert the file to .csv for easy reading
+        write_csv(f"density_{FRAME}{TIME_UNIT}")
+    
+
+    # Regardless of which option is chose, a .csv file is written in ./coarse_density_profile/  
+    # Read the density file and find the zcoordinate location of the max density
+    zpositions, densities = read_density(f"./coarse_density_profile/density_{FRAME}{TIME_UNIT}.csv")
+    print(f"Z-position slices:")
     print(zpositions)
+    print(f"Densities of z-position slices:")
     print(densities)
     print(np.where(densities == np.max(densities))[0][0])
     max_index = np.where(densities == np.max(densities))[0][0]
     trans_z_by = BOXZ - zpositions[max_index]
 
+
+    # A nice little debug statement
     print(f"Slice with the largest density: {zpositions[max_index]}")
     print(f"Translating frame {FRAME}{TIME_UNIT} by {trans_z_by}")
 
@@ -185,8 +326,6 @@ for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
             f"-trans 0.0 0.0 {trans_z_by} "
             f"-pbc mol "
             f"-o ./coarse_trans_traj/frame_{FRAME}{TIME_UNIT}_coarse_transl.xtc")
-    subprocess.call(translated_frame, shell=True)
-
-
-
- 
+    subprocess.run(translated_frame, 
+                   shell=True,
+                   capture_output=True)
