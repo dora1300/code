@@ -283,46 +283,53 @@ for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
                 f"-o ./stepA_wholesys_mod_noclust/frame_{FRAME}{TIME_UNIT}_whole_sys.gro")
         subprocess.run(wholesys_noclust_gro, shell=True)
 
-        exit()
-
-        # Step 3a - calculate the COM of the no cluster frame and determine the translational moves
-        noclust_TOP = f"./stepA_wholesys_mod_noclust/frame_{FRAME}{TIME_UNIT}_whole_sys.gro"
-        traj_no_clust = md.load(f"./stepA_wholesys_mod_noclust/frame_{FRAME}{TIME_UNIT}_whole_sys.xtc",
-                                top=noclust_TOP)
-        no_clust_COM = md.compute_center_of_mass(traj_no_clust)
+        continue
 
 
-        print(f"Center of Mass of largest cluster for frame: {FRAME}{TIME_UNIT}")
-        print(f"{clust_only_COM[0]}")
-        print(f"Translation moves for frame: {FRAME}{TIME_UNIT}")
-        print(f"X = {transX}")
-        print(f"Y = {transY}")
-        print(f"Z = {transZ}")
+        """
+        03.21.24
 
-        transX = BOXX - no_clust_COM[0][0]
-        transY = BOXY - no_clust_COM[0][1]
-        transZ = BOXZ - no_clust_COM[0][2]
+        There was an exit code here, I took it out and I've commented out the remainder of
+        this code. I will delete it once I know this is the right way to do this.
+        """
+        # # Step 3a - calculate the COM of the no cluster frame and determine the translational moves
+        # noclust_TOP = f"./stepA_wholesys_mod_noclust/frame_{FRAME}{TIME_UNIT}_whole_sys.gro"
+        # traj_no_clust = md.load(f"./stepA_wholesys_mod_noclust/frame_{FRAME}{TIME_UNIT}_whole_sys.xtc",
+        #                         top=noclust_TOP)
+        # no_clust_COM = md.compute_center_of_mass(traj_no_clust)
 
 
-        # now, using the translational moves, translate the .xtc file generated above 
-        # and perform pbc corrections on it!
-        translated_noclust_frame = (f"echo 0 | {FUNC} trjconv "
-            f"-f ./stepA_wholesys_mod_noclust/frame_{FRAME}{TIME_UNIT}_whole_sys.xtc " 
-            f"-s {TPR} "
-            f"-trans {transX} {transY} {transZ} "
-            f"-pbc mol "
-            f"-o ./translated_trajs/frame_{FRAME}{TIME_UNIT}_transl.xtc")
-        subprocess.run(translated_noclust_frame, shell=True, capture_output=True)
+        # print(f"Center of Mass of largest cluster for frame: {FRAME}{TIME_UNIT}")
+        # print(f"{clust_only_COM[0]}")
+        # print(f"Translation moves for frame: {FRAME}{TIME_UNIT}")
+        # print(f"X = {transX}")
+        # print(f"Y = {transY}")
+        # print(f"Z = {transZ}")
 
-        ## DEBUG
-        # this is a debug step, to see if my procedure is even working
-        # I am going to translate only the largest cluster to make a cluster only trajectory
-        # to see if the PBC things I'm doing is even correct
-        translated_noclust_frame_cluster = (f"echo 0 | {FUNC} trjconv "
-            f"-f ./stepA_wholesys_mod_noclust/frame_{FRAME}{TIME_UNIT}_whole_sys.xtc " 
-            f"-s {TPR} "
-            f"-trans {transX} {transY} {transZ} "
-            f"-pbc mol "
-            f"-o ./only_trans_cluster_trajs/frame_{FRAME}{TIME_UNIT}_transl_cluster.gro")
-        subprocess.run(translated_noclust_frame_cluster, shell=True, capture_output=True)
+        # transX = BOXX - no_clust_COM[0][0]
+        # transY = BOXY - no_clust_COM[0][1]
+        # transZ = BOXZ - no_clust_COM[0][2]
+
+
+        # # now, using the translational moves, translate the .xtc file generated above 
+        # # and perform pbc corrections on it!
+        # translated_noclust_frame = (f"echo 0 | {FUNC} trjconv "
+        #     f"-f ./stepA_wholesys_mod_noclust/frame_{FRAME}{TIME_UNIT}_whole_sys.xtc " 
+        #     f"-s {TPR} "
+        #     f"-trans {transX} {transY} {transZ} "
+        #     f"-pbc mol "
+        #     f"-o ./translated_trajs/frame_{FRAME}{TIME_UNIT}_transl.xtc")
+        # subprocess.run(translated_noclust_frame, shell=True, capture_output=True)
+
+        # ## DEBUG
+        # # this is a debug step, to see if my procedure is even working
+        # # I am going to translate only the largest cluster to make a cluster only trajectory
+        # # to see if the PBC things I'm doing is even correct
+        # translated_noclust_frame_cluster = (f"echo 0 | {FUNC} trjconv "
+        #     f"-f ./stepA_wholesys_mod_noclust/frame_{FRAME}{TIME_UNIT}_whole_sys.xtc " 
+        #     f"-s {TPR} "
+        #     f"-trans {transX} {transY} {transZ} "
+        #     f"-pbc mol "
+        #     f"-o ./only_trans_cluster_trajs/frame_{FRAME}{TIME_UNIT}_transl_cluster.gro")
+        # subprocess.run(translated_noclust_frame_cluster, shell=True, capture_output=True)
 
