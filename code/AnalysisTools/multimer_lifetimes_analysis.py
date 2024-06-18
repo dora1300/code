@@ -278,7 +278,7 @@ I want to do something else with it.
 # first, handle the plot (which is in ps)
 fig, ax = plt.subplots()
 ax.hist((np.array(multimer_lifetimes_for_plotting)*FRAME_TIME), density=True, color="grey",
-        bins=10000)
+        bins='auto')
 plt.xlabel("Multimer lifetimes (ps)")
 plt.ylabel("Counts")
 plt.xlim(-100, 100000)
@@ -291,7 +291,7 @@ plt.close()
 # second, handle the plot (which is in ns) NOTICE THE DIFFERENT UNITS FOR CONVENIENCE!
 fig, ax = plt.subplots()
 ax.hist((np.array(multimer_lifetimes_for_plotting)*FRAME_TIME)/1000, density=True, color="grey",
-        bins=10000)
+        bins='auto')
 plt.xlabel("Multimer lifetimes (ns)")
 plt.ylabel("Counts")
 #plt.xlim(-10, 100)

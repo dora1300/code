@@ -78,6 +78,11 @@ parser.add_argument('-mpi',
         help="Pass this flag to turn on the mpi settings for all the gmx functions",
         action="store_true",
         default=False)
+parser.add_argument('-silent',
+        help="Suppress output from GROMACS commands. Use with **caution**! If the centering fails, "
+        "you won't know where or why.",
+        action="store_true",
+        default=False)
         
 
 args = parser.parse_args()
@@ -199,7 +204,10 @@ for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
                     f"-pbc mol -ur compact "
                     f"-n ./index_files/all_{FRAME}{TIME_UNIT}.ndx "
                     f"-o ./stepA_wholesys_mod/frame_{FRAME}{TIME_UNIT}_whole_sys.xtc")
-        subprocess.run(wholesys_export, shell=True, capture_output=True)
+        if args.silent:
+            subprocess.run(wholesys_export, shell=True, capture_output=True)
+        else:
+            subprocess.run(wholesys_export, shell=True)
 
         # export ONLY the largest cluster from the same frame, which will be important
         # for calculating the COM of the cluster
@@ -211,15 +219,21 @@ for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
                     f"-pbc mol -ur compact "
                     f"-n ./index_files/all_{FRAME}{TIME_UNIT}.ndx "
                     f"-o ./stepB_cluster_mod/frame_{FRAME}{TIME_UNIT}_cluster.xtc")
-        subprocess.run(cluster_export_xtc, shell=True, capture_output=True)
+        if args.silent:
+            subprocess.run(cluster_export_xtc, shell=True, capture_output=True)
+        else:
+            subprocess.run(cluster_export_xtc, shell=True)
+
         #   the gro file is required as the topology for the .xtc file in mdtraj
         cluster_export_gro = (f"echo 10 10 | {FUNC} trjconv -f {TRAJ} -s {TPR} "
                     f"-b {FRAME} -e {FRAME} -tu {TIME_UNIT} "
                     f"-pbc mol -ur compact "
                     f"-n ./index_files/all_{FRAME}{TIME_UNIT}.ndx "
                     f"-o ./stepB_cluster_mod/frame_{FRAME}{TIME_UNIT}_cluster.gro")
-        subprocess.run(cluster_export_gro, shell=True, capture_output=True)
-
+        if args.silent:
+            subprocess.run(cluster_export_gro, shell=True, capture_output=True)
+        else:
+            subprocess.run(cluster_export_gro, shell=True)
 
         # calculate the COM of the cluster and determine the translational moves
         clust_TOP = f"./stepB_cluster_mod/frame_{FRAME}{TIME_UNIT}_cluster.gro"
@@ -248,7 +262,10 @@ for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
                 f"-trans {transX} {transY} {transZ} "
                 f"-pbc mol "
                 f"-o ./translated_trajs/frame_{FRAME}{TIME_UNIT}_transl.xtc")
-        subprocess.run(translated_frame, shell=True, capture_output=True)
+        if args.silent:
+            subprocess.run(translated_frame, shell=True, capture_output=True)
+        else:
+            subprocess.run(translated_frame, shell=True)
 
 
         ## DEBUG
@@ -262,7 +279,10 @@ for FRAME in range(START_FRAME, STOP_FRAME+FRAME_ITER, FRAME_ITER):
                 f"-n ./index_files/all_{FRAME}{TIME_UNIT}.ndx "
                 f"-pbc mol "
                 f"-o ./only_trans_cluster_trajs/frame_{FRAME}{TIME_UNIT}_transl_cluster.gro")
-        subprocess.run(translated_cluster, shell=True, capture_output=True)
+        if args.silent:
+            subprocess.run(translated_cluster, shell=True, capture_output=True)
+        else:
+            subprocess.run(translated_cluster, shell=True)
         continue
 
 
