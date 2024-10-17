@@ -33,15 +33,12 @@ parser.add_argument("-coils_per_protein", help="The number of coil segments per 
                     "Mixed coils-per-protein types will be added later.", required=True, type=int)
 parser.add_argument("-total_coils", help="The total number of coils in the simulation", required=True,
                     type=int)
-#parser.add_argument("-nprots", help="The total number of individual proteins in the simulation", required=True,
-#                    type=int)
-parser.add_argument("-ft", help="[ps] Frame time, i.e. the amount of time that each frame in the Contacts Data File "
-                                "is worth in simulation. Integers only. Only necessary for making the final graph",
-                            type=int, default=None)
+# parser.add_argument("-ft", help="[ps] Frame time, i.e. the amount of time that each frame in the Contacts Data File "
+#                                 "is worth in simulation. Integers only. Only necessary for making the final graph",
+#                             type=int, default=None)
 parser.add_argument("-output_name", help="A common name to give to output files. Default = [output]",
                     default="output", type=str)
-# parser.add_argument("-lifetimes", help="Pass this flag to only calculate the lifetimes of interactions.",
-#                     action="store_true", default=False)
+
 
 args = parser.parse_args()
 CONTACTS_FILE = args.contacts_data
