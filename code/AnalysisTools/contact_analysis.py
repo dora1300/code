@@ -15,6 +15,13 @@ the alternative.
 
 @Updates:
 2023 05 02 - I was incorrectly counting total interactions and unique partners for coils. That is now fixed.
+
+2023 08 28 - I was still incorrectly counting total interactions for individual coils. I *was* summing the values
+in the interaction arrays for each coil, but what's in those arrays are the indices of every coil that a given 
+coil_i interacts with. Summing that produces a dasterdly high and not correct number. This is now fixed by
+calculating the len() of the interaction array for each coil.
+    It is true that the number of interactions per coil can be larger than the number of frames analyzed, but it 
+    shouldn't be > (multimerization_state * numer_of_frames)
 """
 
 import numpy as np
@@ -313,7 +320,7 @@ pd.DataFrame(percentage_time_coil_interactions).to_csv(f"{args.output}_percentag
 # Just for shits and giggles I'll write out the total number of partners that a coil sees. Maybe it's useful, maybe not
 total_summed_partners_array = []
 for i, coil in enumerate(total_partners_array):
-    total_summed_partners_array.append(np.sum(coil))
+    total_summed_partners_array.append(len(coil))
 pd.DataFrame(total_summed_partners_array).to_csv(f"{args.output}_totalNumberPartners_byCoil.csv",
                                                        header=["Total number of partners throughout simulation"])
 
