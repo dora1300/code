@@ -68,6 +68,7 @@ with open(CONTACTS_FILE, 'r') as DATA:
         ncoils_in_intrachain = 0
         ncoils_in_interchain = 0
         multimers_in_frame = FRAME.rstrip("\n").split("  ") # all multimers are separated by a double space
+        print(multimers_in_frame)
 
         for multimers in multimers_in_frame:
             try:
@@ -77,6 +78,7 @@ with open(CONTACTS_FILE, 'r') as DATA:
                 # map() applies a function to all items in a list (which here is generated using
                 # .split()) and then returns an iterator, which I put into a list using list()
                 coil_indices = list(map(int, multimers.split(" ")))
+                # print(coil_indices)
             except:
                 # this will happen if there is no interaction in the given frame. This doesn't necessarily
                 # mean the end of the file, though! So just keep iterating through
@@ -88,18 +90,36 @@ with open(CONTACTS_FILE, 'r') as DATA:
             
             # Now, this is the part that I will actually check what kind of interaction is happening for the coils
             for i, coil in enumerate(coil_indices):
+                coil_i_in_intrachain = 0
+                coil_i_in_interchain = 0
                 for j, coil2 in enumerate(coil_indices):
-
                     if i == j:
                         # this is the case where the selected coils are the same in the multimer. It doesn't make
                         # any sense to evaluate a coil interaction when looking at the same coil!
                         continue
+                    elif (coil_indices[i] % CPP == 0) and (coil_indices[j] % CPP == 0):
+                        # this is an interchain interaction. If both coils modulo coils-per-protein = 0
+                        # then it has to be interchain because that means the coils are the start of two different proteins.
+                        coil_i_in_interchain = 1
+                        continue
+                    elif int(coil_indices[i]/CPP) == int(coil_indices[j]/CPP):
+                        # this is a unique check. If two coil indicies are within the same protein, then 
+                        # the int() of the division coil/CPP will produce the same integer. Otherwise, if the 
+                        # two coils are on different proteins, then it will return false
+                        coil_i_in_intrachain = 1
+                        continue
                     else:
-                        if np.abs(coil_indices[i] - coil_indices[j]) < CPP:
-                            # THIS IS A INTRA-CHAIN/SELF INTERACTION!
-                            ncoils_in_intrachain += 1
-                        else:
-                            ncoils_in_interchain += 1
+                        coil_i_in_interchain = 1
+                
+                # Here's how to make sense of this
+                # the first loop cycles through the coils in the multimer. Then, the second loop cycles through EVERY
+                # other coil *in the multimer* and asks is this interaction intra- or inter-chain for coil_i
+                # But, the variables coil_i_in_intrachain and coil_i_in_interchain act as switches, so that 
+                # they can only be set to 1 once in the multimer, because coil_i can only contribute itself
+                # ONCE to the pool of inter and intrachain coils
+                # clear as mud?
+                ncoils_in_intrachain += coil_i_in_intrachain
+                ncoils_in_interchain += coil_i_in_interchain
 
         coils_in_interchain_list.append(ncoils_in_interchain)
         coils_in_intrachain_list.append(ncoils_in_intrachain)
@@ -115,6 +135,17 @@ I will also make a cursory graph for easy inspection of the data.
 fraction_coils_in_interchain = np.array(coils_in_interchain_list)/TOT_COILS
 fraction_coils_in_intrachain = np.array(coils_in_intrachain_list)/TOT_COILS
 fraction_coils_NOT_multimer = np.array(coils_not_in_multimers_list)/TOT_COILS
+
+# this is print debugging. Commented out but preserved in case there's more problems lol.
+# print("intra", coils_in_intrachain_list)
+# print("inter", coils_in_interchain_list)
+# print(coils_not_in_multimers_list)
+# print()
+# print("intra", fraction_coils_in_intrachain)
+# print("inter", fraction_coils_in_interchain)
+# print(fraction_coils_NOT_multimer)
+
+# exit()
 
 # Save out the data into a .csv file!
 # Importantly, I am also going to save the raw counts per frame, as well as save out
