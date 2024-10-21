@@ -68,7 +68,6 @@ with open(CONTACTS_FILE, 'r') as DATA:
         ncoils_in_intrachain = 0
         ncoils_in_interchain = 0
         multimers_in_frame = FRAME.rstrip("\n").split("  ") # all multimers are separated by a double space
-        print(multimers_in_frame)
 
         for multimers in multimers_in_frame:
             try:
@@ -78,7 +77,6 @@ with open(CONTACTS_FILE, 'r') as DATA:
                 # map() applies a function to all items in a list (which here is generated using
                 # .split()) and then returns an iterator, which I put into a list using list()
                 coil_indices = list(map(int, multimers.split(" ")))
-                # print(coil_indices)
             except:
                 # this will happen if there is no interaction in the given frame. This doesn't necessarily
                 # mean the end of the file, though! So just keep iterating through
