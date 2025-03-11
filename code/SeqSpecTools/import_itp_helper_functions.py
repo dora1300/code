@@ -193,8 +193,8 @@ def deepcoil_make_pseudoangles(arr_of_aa_indicies, arr_of_dc_scores, num_of_aas)
                                        arr_of_dc_scores[I+1],
                                        arr_of_dc_scores[I+2]]),
                                        1)
-        if average_dc_score == 0.0:
-            average_dc_score = 0.01     # this is to be consistent with the disordered linker state
+        if average_dc_score < 0.1:
+            average_dc_score = 0.1     # this is to be consistent with the disordered linker state
         list_of_pseudoangles.append([arr_of_aa_indicies[I],
                                      arr_of_aa_indicies[I+1],
                                      arr_of_aa_indicies[I+2],
@@ -223,7 +223,7 @@ def deepcoil_make_pseudotorsions(arr_of_aa_indicies, arr_of_dc_scores, num_of_aa
                                        arr_of_dc_scores[I+2],
                                        arr_of_dc_scores[I+3]]),
                                        1)
-        if average_dc_score == 0.0:
+        if average_dc_score < 0.1:
             average_dc_score = 0.1
         list_of_pseudotorsions.append([arr_of_aa_indicies[I],
                                      arr_of_aa_indicies[I+1],
