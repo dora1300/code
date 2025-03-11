@@ -137,6 +137,13 @@ def parse_deepcoil_prediction(FILENAME):
         So I'm converting every score <0.01 to 0.010.
         This corresponds to using a dampening of 0.01 for linkers in my old framework, i.e. this 
         corresponds to a primarily disordered state.
+
+        Update 2025 03 11 --> all scores are now getting "binned" to their nearest tenth place.
+        All values < 0.05 become 0.01. Values >= 0.05 and < 0.1 turn into 0.1.
+        This should avoid having values like 0.25 which seem to be causing numerical stability issues.
+        This code doesn't actually get updated, but I'm putting a comment here because this function
+        *IS* affected.
+        
     Arguments:
     Returns:
         :pseudoangles:      [list]
@@ -172,6 +179,10 @@ def parse_deepcoil_prediction(FILENAME):
 def deepcoil_make_pseudoangles(arr_of_aa_indicies, arr_of_dc_scores, num_of_aas):
     """
     Description:
+        Update 2025 03 11 --> all scores are now getting "binned" to their nearest tenth place.
+        All values < 0.05 become 0.01. Values >= 0.05 and < 0.1 turn into 0.1.
+        This should avoid having values like 0.25 which seem to be causing numerical stability issues.
+        This update takes place in the "average_dc_score(...)" line since that incorporates rounding.
     Arguments:
     Returns:
     """
@@ -181,19 +192,24 @@ def deepcoil_make_pseudoangles(arr_of_aa_indicies, arr_of_dc_scores, num_of_aas)
         average_dc_score = np.round(np.average([arr_of_dc_scores[I],
                                        arr_of_dc_scores[I+1],
                                        arr_of_dc_scores[I+2]]),
-                                       3)
+                                       1)
+        if average_dc_score == 0.0:
+            average_dc_score = 0.01     # this is to be consistent with the disordered linker state
         list_of_pseudoangles.append([arr_of_aa_indicies[I],
                                      arr_of_aa_indicies[I+1],
                                      arr_of_aa_indicies[I+2],
                                      average_dc_score])
-        
+            
     return list_of_pseudoangles
 
 
 def deepcoil_make_pseudotorsions(arr_of_aa_indicies, arr_of_dc_scores, num_of_aas):
     """
     Description:
-
+        Update 2025 03 11 --> all scores are now getting "binned" to their nearest tenth place.
+        All values < 0.05 become 0.01. Values >= 0.05 and < 0.1 turn into 0.1.
+        This should avoid having values like 0.25 which seem to be causing numerical stability issues.
+        This update takes place in the "average_dc_score(...)" line since that incorporates rounding.
     Arguments:
 
     Returns:        Returns an array of window averaged DeepCoil prediction scores
@@ -206,7 +222,9 @@ def deepcoil_make_pseudotorsions(arr_of_aa_indicies, arr_of_dc_scores, num_of_aa
                                        arr_of_dc_scores[I+1],
                                        arr_of_dc_scores[I+2],
                                        arr_of_dc_scores[I+3]]),
-                                       3)
+                                       1)
+        if average_dc_score == 0.0:
+            average_dc_score = 0.1
         list_of_pseudotorsions.append([arr_of_aa_indicies[I],
                                      arr_of_aa_indicies[I+1],
                                      arr_of_aa_indicies[I+2],
