@@ -126,7 +126,13 @@ def fasta_parser(FASTAFILE):
 
         return sequence_name, sequence
 
-def write_itp_text(fasta_file, structure_tool, structure_data, itp_filename):
+def write_itp_text(fasta_file, 
+                   molecule_name,
+                   structure_tool, 
+                   structure_data, 
+                   itp_filename, 
+                   use_secondary_structure_info, 
+                   force_adjuster):
     """
     Description:
     Arguments:
@@ -152,7 +158,7 @@ def write_itp_text(fasta_file, structure_tool, structure_data, itp_filename):
     moleculetype_text = f"""
 [ moleculetype ]
 ;name          nrexcl
-coil_model     4
+{molecule_name}     4
 """
 
     atoms_text = helper.generate_atom_text(protein_sequence, 
@@ -190,15 +196,25 @@ coil_model     4
     if structure_tool == "deepcoil":
         pseudo_angles, pseudo_torsions = helper.parse_deepcoil_prediction(structure_data)
     
-    angles_text = helper.generate_angles_text(pseudo_angles, THETA_HELIX, THETA_HELIX_FORCE)
+    if use_secondary_structure_info:
+        angles_text = helper.generate_angles_text(pseudo_angles, THETA_HELIX, THETA_HELIX_FORCE, predictions=True)
+    else:
+        THETA_MOD_FORCE = THETA_HELIX_FORCE * force_adjuster
+        angles_text = helper.generate_angles_text(pseudo_angles, THETA_HELIX, THETA_MOD_FORCE, predictions=False)
 
 
     dihedrals_text = f"""
 [ dihedrals ]
 ;i   j   k   l   func   phi0(deg)   kb (kJ/mol)  mult.
 """
-    torsion_mult1 = helper.generate_torsions_text(pseudo_torsions, ALPHA1_HELIX, ALPHA1_HELIX_FORCE, 1)
-    torsion_mult3 = helper.generate_torsions_text(pseudo_torsions, ALPHA3_HELIX, ALPHA3_HELIX_FORCE, 3)
+    if use_secondary_structure_info:
+        torsion_mult1 = helper.generate_torsions_text(pseudo_torsions, ALPHA1_HELIX, ALPHA1_HELIX_FORCE, 1, predictions=True)
+        torsion_mult3 = helper.generate_torsions_text(pseudo_torsions, ALPHA3_HELIX, ALPHA3_HELIX_FORCE, 3, predictions=True)
+    else:
+        ALPHA1_MOD_FORCE = ALPHA1_HELIX_FORCE * force_adjuster
+        ALPHA3_MOD_FORCE = ALPHA3_HELIX_FORCE * force_adjuster
+        torsion_mult1 = helper.generate_torsions_text(pseudo_torsions, ALPHA1_HELIX, ALPHA1_MOD_FORCE, 1, predictions=False)
+        torsion_mult3 = helper.generate_torsions_text(pseudo_torsions, ALPHA3_HELIX, ALPHA3_MOD_FORCE, 3, predictions=False)
     dihedrals_text += torsion_mult1
     dihedrals_text += torsion_mult3
 
@@ -235,6 +251,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-fastafile', help="File name (and path, if appropriate) of the protein sequence you wish to "
                         "generate topology files for, in FASTA format!", type=str)
+    parser.add_argument('-molecule_type_name', help="The name to give your molecule! i.e. [ moleculetype ]",
+                        type=str, default='coil-model')
+    parser.add_argument('-no_structure_prediction', help="A switch to turn off the feature that scales force constants "
+                        "by the secondary structure prediction mechanisms. Passing this flag sets the variable to FALSE. "
+                        "Default value is True.",
+                        action="store_false", default=True)
     parser.add_argument('-structure_prediction', help="Please provide the name of the tool used to make secondary structure "
                         "predictions. Choose out of these options: 'deepcoil', 'psipred', 's4pred'", type=str)
     parser.add_argument('-sp_data', help="File name of domain/secondary structure prediction output. Current"
@@ -242,12 +264,23 @@ if __name__ == '__main__':
                         "other flag. Also, include full path if file is not in directory.", type=str)
     parser.add_argument('-output_file', help="Name that you wish to give to the .itp file that you've just made!"
                         " Include extension!", type=str)
+    parser.add_argument("-force_scale_factor", help="[Default None] A factor by which to universally scale the force constant "
+                        "values for ANGLES and TORSIONS **ONLY**. No other force constants are changed. "
+                        "The default/reference force constants for angles and torsions are the same as used for the default "
+                        "coil segments in the Ramirez et al 2024 BPJ paper. "
+                        "Each force constant is scaled multiplicatively by the scale factor, so please "
+                        "provide fractional scale factors. e.g. 1 = no change, 0.90 = 90%% of regular "
+                        "FC, 1.25 means 25%% stronger than reference FC etc.", default=None,
+                        type=float)
 
     args = parser.parse_args()
     FASTA = args.fastafile
+    MOLTYPE = args.molecule_type_name
+    doIUsePrediction = args.no_structure_prediction
     PREDICTION = args.structure_prediction
     STRFILE = args.sp_data
     OUTNAME = args.output_file
+    FSCALAR = args.force_scale_factor
 
 
 
@@ -255,4 +288,4 @@ if __name__ == '__main__':
         PROTEIN ITP MAKER
             This is where the itp file will be assembled!!
     """
-    write_itp_text(FASTA, PREDICTION, STRFILE, OUTNAME)
+    write_itp_text(FASTA, MOLTYPE, PREDICTION, STRFILE, OUTNAME, doIUsePrediction, FSCALAR)

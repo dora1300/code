@@ -74,12 +74,13 @@ def generate_pairs_text(sequence_length, pair_type, pair_attractive, pair_repuls
     return output_text
 
 
-def generate_angles_text(pseudoangles, equil_value, angle_force):
+def generate_angles_text(pseudoangles, equil_value, angle_force, predictions=True):
     """
     Description:
         [ angles ]
         ;i    j    k    func   theta0 (deg)    Ktheta (kJ/mol/rad^2)
     Arguments:
+        predictions     : [True]
     Returns:       
     """
     
@@ -87,15 +88,23 @@ def generate_angles_text(pseudoangles, equil_value, angle_force):
 [ angles ]
 ;i    j    k    func   theta0 (deg)    Ktheta (kJ/mol/rad^2)
 """
-    for angle_set in pseudoangles:
-        force_adjustment = angle_force * angle_set[3]
-        line_text = f" {angle_set[0]}    {angle_set[1]}    {angle_set[2]}    1      {equil_value}           {force_adjustment:.4f}\n"
-        output_text += line_text
+    if predictions:
+        # make angle force constant based on a parameter from secondary structure predicition 
+        # that lives in pseudoangles[3]
+        for angle_set in pseudoangles:
+            force_adjustment = angle_force * angle_set[3]
+            line_text = f" {angle_set[0]}    {angle_set[1]}    {angle_set[2]}    1      {equil_value}           {force_adjustment:.4f}\n"
+            output_text += line_text
+    else:
+        # use the angle force constant value that is directly given to this function
+        for angle_set in pseudoangles:
+            line_text = f" {angle_set[0]}    {angle_set[1]}    {angle_set[2]}    1      {equil_value}           {angle_force:.4f}\n"
+            output_text += line_text
 
     return output_text
 
 
-def generate_torsions_text(pseudotorsions, torsion_value, torsion_force, multiplicity):
+def generate_torsions_text(pseudotorsions, torsion_value, torsion_force, multiplicity, predictions=True):
     """
     Description:
         [ dihedrals ]
@@ -106,11 +115,18 @@ def generate_torsions_text(pseudotorsions, torsion_value, torsion_force, multipl
 
     output_text = f""";     multiplicity = {multiplicity}
 """
-    
-    for torsion_set in pseudotorsions:
-        force_adjustment = torsion_force * torsion_set[4]
-        line_text = f" {torsion_set[0]}   {torsion_set[1]}   {torsion_set[2]}   {torsion_set[3]}    1     {torsion_value}      {force_adjustment:.4f}        {multiplicity}\n"
-        output_text += line_text
+    if predictions:
+        # make angle force constant based on a parameter from secondary structure predicition 
+        # that lives in pseudotorsions[4]    
+        for torsion_set in pseudotorsions:
+            force_adjustment = torsion_force * torsion_set[4]
+            line_text = f" {torsion_set[0]}   {torsion_set[1]}   {torsion_set[2]}   {torsion_set[3]}    1     {torsion_value}      {force_adjustment:.4f}        {multiplicity}\n"
+            output_text += line_text
+    else:
+        # use the torsion force constant value that is directly given to this function
+        for torsion_set in pseudotorsions:
+            line_text = f" {torsion_set[0]}   {torsion_set[1]}   {torsion_set[2]}   {torsion_set[3]}    1     {torsion_value}      {torsion_force:.4f}        {multiplicity}\n"
+            output_text += line_text
 
     return output_text
 

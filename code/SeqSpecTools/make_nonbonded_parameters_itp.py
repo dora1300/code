@@ -8,6 +8,12 @@ file that is used with the sequence specific simulation framework and associated
 
 This file is generated from a 20x20 matrix of epsilsons and also possible sigmas. That is up
 to the user.
+
+
+@Updates:
+2025 03 24      - I am adding the ability to scale the epsilons by some factor, which is useful
+if I want to change the strength of interactions universally. I am currently only allowing for one
+scale factor which is applied to every single epsilon.
 """
 import argparse         # this is for when I test the script solo
 import numpy as np
@@ -35,7 +41,7 @@ dignon_sigmas = [0.504, 0.656, 0.568, 0.558, 0.548,
 
 """ FUNCTION DEFINITIONS """
 
-def write_nonbonded_itp(epsilon_file_name, sigma_table):
+def write_nonbonded_itp(epsilon_file_name, sigma_table, scaling_factor):
     """
     Description:
         This is the main function for generating the text that will be written
@@ -52,14 +58,25 @@ def write_nonbonded_itp(epsilon_file_name, sigma_table):
                                 delimiter=',',
                                 encoding="utf-8-sig")    # might need to add encoding thing
 
-    # Now the magic happens. It's file to make the file contents
-    nonbond_params_text = f"""[ nonbond_params ] 
-;i    j     func    V(sigma)   W(epsilon)\n"""
+    if scaling_factor is None:
+        # Now the magic happens. It's file to make the file contents
+        nonbond_params_text = f"""[ nonbond_params ] 
+        ;i    j     func    V(sigma)   W(epsilon)\n"""
 
-    for I in range(len(aas_list)):
-        for J in range(I, len(aas_list)):
-            new_string = f"{aas_list[I]}   {aas_list[J]}   1       {sigma_table[I][J]:.4f}    {epsilon_table[I][J]:.4f}\n"
-            nonbond_params_text += new_string
+        for I in range(len(aas_list)):
+            for J in range(I, len(aas_list)):
+                new_string = f"{aas_list[I]}   {aas_list[J]}   1       {sigma_table[I][J]:.4f}    {epsilon_table[I][J]:.4f}\n"
+                nonbond_params_text += new_string
+    else:
+        # Now the magic happens. It's file to make the file contents
+        nonbond_params_text = f"""[ nonbond_params ] 
+        ;i    j     func    V(sigma)   W(epsilon)\n"""
+
+        for I in range(len(aas_list)):
+            for J in range(I, len(aas_list)):
+                scaled_epsilon = epsilon_table[I][J] * scaling_factor
+                new_string = f"{aas_list[I]}   {aas_list[J]}   1       {sigma_table[I][J]:.4f}    {scaled_epsilon:.4f}\n"
+                nonbond_params_text += new_string
 
     return nonbond_params_text
 
@@ -167,6 +184,12 @@ if __name__ == '__main__':
     parser.add_argument("-combining_rule", help="The code-name of the combining rule to use for calculating "
                         "sigmas. Only 'lorentz' is supported right now.",
                         default="lorentz")
+    
+    parser.add_argument("-epsilon_scale_factor", help="[Default None] A factor by which to scale the epsilons provided in the "
+                        "epsilon matrix. Each epsilon is scaled multiplicatively by the scale factor, so please "
+                        "provide fractional scale factors. e.g. 1 = no change, 0.90 = 90%% of regular "
+                        "epsilons, 1.25 means 25%% stronger than reference epsilons etc.", default=None,
+                        type=float)
 
     args = parser.parse_args()
 
@@ -176,7 +199,7 @@ if __name__ == '__main__':
                                              args.sigma_by_dignon, args.combining_rule)
     
     # Step 2 -- generate the text that will make up the file contents
-    itp_file_contents = write_nonbonded_itp(args.epsilon_file_name, array_of_sigmas)
+    itp_file_contents = write_nonbonded_itp(args.epsilon_file_name, array_of_sigmas, args.epsilon_scale_factor)
 
     # Step 3 -- save the itp file to disk!
     save_itp_file_to_disk(itp_file_contents, args.name_of_itp_file)
