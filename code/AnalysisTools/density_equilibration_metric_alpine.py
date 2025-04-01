@@ -92,13 +92,20 @@ for time in time_array:
 
 
 
-fig, ax = plt.subplots()
-ax.plot(time_array/1000000, high_dens_arr, marker="", linestyle="-", color="crimson", label="High density region")
-ax.plot(time_array/1000000, low_dens_arr, marker="", linestyle="-", color="darkblue", label="Low density region")
-plt.ylim(0, 1)
+plt.rcParams['font.size'] = 14
+fig, ax = plt.subplots(figsize=(4,4))
+ax.plot(time_array/1000000, high_dens_arr, 
+        marker="", linestyle="-", linewidth=1.0, 
+        color="crimson", label="High density region")
+ax.plot(time_array/1000000, low_dens_arr, 
+        marker="", linestyle="-", linewidth=1.0,
+        color="darkblue", label="Low density region")
+plt.ylim(-0.1, 1)
 plt.xlabel(r"Simulation time ($\mu$s)")
 plt.ylabel(r"$\rho$ (number density)")
 plt.title(f"Density equilibration plot: {args.title}")
-plt.savefig(args.image, dpi=300)
+plt.grid(linestyle=":", color="black", alpha=0.35)
+plt.tight_layout()
+plt.savefig(args.image, dpi=600)
 
 
