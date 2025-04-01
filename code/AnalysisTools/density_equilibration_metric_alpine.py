@@ -103,7 +103,7 @@ ax.plot(time_array/1000000, low_dens_arr,
 plt.ylim(-0.1, 1)
 plt.xlabel(r"Simulation time ($\mu$s)")
 plt.ylabel(r"$\rho$ (number density)")
-plt.title(r"{args.title}\n")
+plt.title(f"{args.title}\n")
 plt.grid(linestyle=":", color="black", alpha=0.45)
 plt.tight_layout()
 plt.savefig(args.image, dpi=600)
