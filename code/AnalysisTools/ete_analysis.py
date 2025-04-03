@@ -103,9 +103,9 @@ for i in range(nmodels):
 firstline += "\n"
 outfile.write(firstline)
 
-for i in range(len(dist)):                  # i corresponds to coil number (1, 2, 3, etc.)
+for i in range(len(dist)):                  # i corresponds to the number of distance entries i.e. frames
     nextline = f"{i}"
-    for j in range(len(dist[i])):           # j is a frame iterator, so that dist[i][j] = ETE of coil_i at frame_j
+    for j in range(len(dist[i])):           # j is the iterator over the distances entries in frame_i
         nextline += f",{dist[i][j]:.4f}"
     nextline += "\n"
     outfile.write(nextline)
@@ -113,12 +113,14 @@ for i in range(len(dist)):                  # i corresponds to coil number (1, 2
 outfile.close()
 
 coil_averages = []
-for coil in range(len(dist)):
-    avg = np.average(np.array(dist[avgstart:][coil]))
-    stdev = np.std(np.array(dist[avgstart:][coil]))
+for coil in range(len(dist[0])):
+    avg = np.average(np.array(dist[avgstart:,coil]))
+    stdev = np.std(np.array(dist[avgstart:,coil]))
     coil_averages.append([avg, stdev])
 
+
 outfile_avg = open(f"{output}_avg.csv", 'w')
+outfile_avg.write(f"#averages calculated starting at frame {avgstart}\n")
 outfile_avg.write("coil_n,average_ete(nm),standarddevation_ete(nm)\n")
 for i in range(nmodels):
     outfile_avg.write(f"coil_{i},{coil_averages[i][0]:.4f},{coil_averages[i][1]:.4f}\n")
@@ -171,10 +173,15 @@ outfile_avg.close()
 plt.rcParams['font.size'] = 14
 if args.plot_timeseries:
     for mod in range(nmodels):
-        fig, ax = plt.subplots()
-        ax.plot(np.arange(0, traj.n_frames), dist[:,mod], linewidth=0.5, label=f"Coil model: {mod+1}", color="blue")
-        ax.axhline(y=coil_averages[mod][0], color="red", label=f"Avg dist: {coil_averages[mod][0]:.3f}",
-                   linewidth=0.5)
+        fig, ax = plt.subplots(figsize=(6,4))
+        plt.plot(np.arange(0, traj.n_frames), dist[:,mod], linewidth=1.0, label=f"Coil model: {mod+1}", color="deepskyblue",
+                zorder=0.5)
+        plt.hlines(y=coil_averages[mod][0], xmin=avgstart, xmax=traj.n_frames,
+                   color="black", label=f"Avg dist: {coil_averages[mod][0]:.3f}",
+                   linewidth=1.5, zorder=3)
+        plt.fill_between(np.arange(avgstart, traj.n_frames, 1), 
+                        coil_averages[mod][0]+coil_averages[mod][1], coil_averages[mod][0]-coil_averages[mod][1],
+                        color="goldenrod", alpha=0.55, zorder=2)
         plt.xlabel("Simulation frame no.")
         plt.ylabel("Distance (nm)")
         plt.ylim(0, np.max(dist[:,mod])+0.25)
