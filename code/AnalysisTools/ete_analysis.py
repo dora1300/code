@@ -45,7 +45,9 @@ parser.add_argument("-id", help="moniker for the simulation being analyzed", req
 parser.add_argument("-o", help="name of output file, NO extension", default="output_ETEanalysis")
 parser.add_argument("-plot_timeseries", help="Provide flag to turn ON time series plotting, one for each model.", action="store_true")
 parser.add_argument("-plot_distribution", help="Provide flag to turn ON distribution style plotting, one for each model.", action="store_true")
-parser.add_argument("-print", help="switch to choose to ONLY print to stdout, no saving files!", default=False, type=bool)
+parser.add_argument("-start_frame_4_average", help="Choose the frame number to start the averaging of the ETE value. Default is 0",
+                    default=0, type=int)
+# parser.add_argument("-print", help="switch to choose to ONLY print to stdout, no saving files!", default=False, type=bool)
 
 
 args = parser.parse_args()
@@ -55,7 +57,8 @@ topology = args.p
 nmodels = args.n        # this is 1-indexed, essentially
 lhelix = args.l         # this is also 1-indexed, essentially
 sim_code = args.id
-output = args.o + ".csv"
+output = args.o
+avgstart = args.start_frame_4_average
 
 # Create a directory for ETE plots if I provide the flag for plotting.
 if args.plot_timeseries or args.plot_distribution:
@@ -93,21 +96,34 @@ dist = md.compute_distances(traj, np.array(apairs))
 
 # Open the output file and save the data to it. This saves the length for each model calculated throughout the trajectory
 # Do this for every single invocation of this script.
-outfile = open(output, 'w')
+outfile = open(f"{output}.csv", 'w')
 firstline = "Frame No."
 for i in range(nmodels):
-    firstline += f",helix_{i+1}_dist(nm)"
+    firstline += f",coil_{i+1}_dist(nm)"
 firstline += "\n"
 outfile.write(firstline)
 
-for i in range(len(dist)):
+for i in range(len(dist)):                  # i corresponds to coil number (1, 2, 3, etc.)
     nextline = f"{i}"
-    for j in range(len(dist[i])):
+    for j in range(len(dist[i])):           # j is a frame iterator, so that dist[i][j] = ETE of coil_i at frame_j
         nextline += f",{dist[i][j]:.4f}"
     nextline += "\n"
     outfile.write(nextline)
 
 outfile.close()
+
+coil_averages = []
+for coil in range(len(dist)):
+    avg = np.average(np.array(dist[avgstart:][coil]))
+    stdev = np.std(np.array(dist[avgstart:][coil]))
+    coil_averages.append([avg, stdev])
+
+outfile_avg = open(f"{output}_avg.csv", 'w')
+outfile_avg.write("coil_n,average_ete(nm),standarddevation_ete(nm)\n")
+for i in range(nmodels):
+    outfile_avg.write(f"coil_{i},{coil_averages[i][0]:.4f},{coil_averages[i][1]:.4f}\n")
+outfile_avg.close()
+
 
 
 # # Analyze the distances and output them into another output file. In this analysis, I will get the average distance
@@ -152,17 +168,19 @@ outfile.close()
 
 
 # Do the plotting for TIME SERIES -- plot each model individually.
+plt.rcParams['font.size'] = 14
 if args.plot_timeseries:
     for mod in range(nmodels):
         fig, ax = plt.subplots()
         ax.plot(np.arange(0, traj.n_frames), dist[:,mod], linewidth=0.5, label=f"Coil model: {mod+1}", color="blue")
-        ax.axhline(y=np.average(dist[:,mod]), color="red", label=f"Avg dist: {np.average(dist[:,mod]):.3f}",
+        ax.axhline(y=coil_averages[mod][0], color="red", label=f"Avg dist: {coil_averages[mod][0]:.3f}",
                    linewidth=0.5)
         plt.xlabel("Simulation frame no.")
         plt.ylabel("Distance (nm)")
         plt.ylim(0, np.max(dist[:,mod])+0.25)
         plt.legend()
         plt.title(f"ETE time series for {sim_code}\nCoil model: {mod +1}")
+        plt.tight_layout()
         plt.savefig(f"./ETE_plots/{sim_code}_model{mod+1}_ETE_timeseries.png", dpi=300)
         plt.close("all")
 
@@ -175,5 +193,6 @@ if args.plot_distribution:
         plt.xlim(0, np.max(dist[:,mod])+0.25)
         plt.ylabel("Frequency")
         plt.title(f"ETE distribution of distances for {sim_code}\nCoil model: {mod +1}")
+        plt.tight_layout()
         plt.savefig(f"./ETE_plots/{sim_code}_model{mod+1}_ETE_distribution.png", dpi=300)
         plt.close("all")
