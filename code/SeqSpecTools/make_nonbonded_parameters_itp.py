@@ -14,6 +14,10 @@ to the user.
 2025 03 24      - I am adding the ability to scale the epsilons by some factor, which is useful
 if I want to change the strength of interactions universally. I am currently only allowing for one
 scale factor which is applied to every single epsilon.
+
+2025 04 18      - I am now adding the ability to scale the sigmas by some factor, similar to what
+I can do with epsilons. Maybe I want to change the size of the amino acids and the epsilons at the same time?
+Doesn't matter why, because now I can.
 """
 import argparse         # this is for when I test the script solo
 import numpy as np
@@ -41,7 +45,7 @@ dignon_sigmas = [0.504, 0.656, 0.568, 0.558, 0.548,
 
 """ FUNCTION DEFINITIONS """
 
-def write_nonbonded_itp(epsilon_file_name, sigma_table, scaling_factor):
+def write_nonbonded_itp(epsilon_file_name, sigma_table, scaling_factor, scaling_factor_sigma):
     """
     Description:
         This is the main function for generating the text that will be written
@@ -74,8 +78,9 @@ def write_nonbonded_itp(epsilon_file_name, sigma_table, scaling_factor):
 
         for I in range(len(aas_list)):
             for J in range(I, len(aas_list)):
+                scaled_sigma = sigma_table[I][J] * scaling_factor_sigma
                 scaled_epsilon = epsilon_table[I][J] * scaling_factor
-                new_string = f"{aas_list[I]}   {aas_list[J]}   1       {sigma_table[I][J]:.4f}    {scaled_epsilon:.4f}\n"
+                new_string = f"{aas_list[I]}   {aas_list[J]}   1       {scaled_sigma:.4f}    {scaled_epsilon:.4f}\n"
                 nonbond_params_text += new_string
 
     return nonbond_params_text
@@ -189,6 +194,12 @@ if __name__ == '__main__':
                         "epsilon matrix. Each epsilon is scaled multiplicatively by the scale factor, so please "
                         "provide fractional scale factors. e.g. 1 = no change, 0.90 = 90%% of regular "
                         "epsilons, 1.25 means 25%% stronger than reference epsilons etc.", default=None,
+                        type=float)
+    
+    parser.add_argument("-sigma_scale_factor", help="[Default None] A factor by which to scale the epsilons provided in the "
+                        "sigma matrix. Each sigma is scaled multiplicatively by the scale factor, so please "
+                        "provide fractional scale factors. e.g. 1 = no change, 0.90 = 90%% of regular "
+                        "sigmas, 1.25 means 25%% stronger than reference sigmas etc.", default=None,
                         type=float)
 
     args = parser.parse_args()
