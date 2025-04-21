@@ -210,7 +210,8 @@ if __name__ == '__main__':
                                              args.sigma_by_dignon, args.combining_rule)
     
     # Step 2 -- generate the text that will make up the file contents
-    itp_file_contents = write_nonbonded_itp(args.epsilon_file_name, array_of_sigmas, args.epsilon_scale_factor)
+    itp_file_contents = write_nonbonded_itp(args.epsilon_file_name, array_of_sigmas, 
+                                            args.epsilon_scale_factor, args.sigma_scale_factor)
 
     # Step 3 -- save the itp file to disk!
     save_itp_file_to_disk(itp_file_contents, args.name_of_itp_file)
