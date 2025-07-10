@@ -36,7 +36,7 @@ def write_text_top(atomtypes_name,
 ; through an include statement
 #include "{atomtypes_name}"
 
-; this is where the [ nonbond_params ] would live, and it is lso
+; this is where the [ nonbond_params ] would live, and it is also
 ; incorporated with an include statement
 #include "{nonbonded_name}"
 

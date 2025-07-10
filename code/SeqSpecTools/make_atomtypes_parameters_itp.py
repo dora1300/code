@@ -72,9 +72,13 @@ def write_atomtypes_itp(output_file, attractive_term=6.9132E-03, repulsive_term=
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="A short little script to write the atomtypes.itp file to include with your SSFF topology!")
-    parser.add_argument("-itp_filename")
-    parser.add_argument("-attractive_term", default=None)
-    parser.add_argument("-repulsive_term", default=None)
+    parser.add_argument("-itp_filename", help="The name for your itp file, please include extension!")
+    parser.add_argument("-attractive_term", help="[Optional] The **base** value for the attractive term (C6) that each "
+        "atom gets. This gets overridden by the nonbonded_params but I need to set this value for the .itp file",
+        default=None)
+    parser.add_argument("-repulsive_term", help="[Optional] The **base** value for the repulsive term (C12) that each "
+        "atom gets. This gets overridden by the nonbonded_params but I need to set this value for the .itp file",
+        default=None)
 
     args = parser.parse_args()
     FILENAME = args.itp_filename

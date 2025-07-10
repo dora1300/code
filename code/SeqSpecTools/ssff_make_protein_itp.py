@@ -132,7 +132,9 @@ def write_itp_text(fasta_file,
                    structure_data, 
                    itp_filename, 
                    use_secondary_structure_info, 
-                   force_adjuster):
+                   force_adjuster,
+                   index_end,
+                   index_start=1):
     """
     Description:
     Arguments:
@@ -200,6 +202,10 @@ def write_itp_text(fasta_file,
         angles_text = helper.generate_angles_text(pseudo_angles, THETA_HELIX, THETA_HELIX_FORCE, predictions=True)
     else:
         THETA_MOD_FORCE = THETA_HELIX_FORCE * force_adjuster
+        pseudo_angles = helper.basic_angle_list_generator(index_start, index_end)
+        pseudo_torsions = helper.basic_torsion_list_generator(index_start, index_end)
+            # yes I know I'm only handling angles in this section but I need to define the torsions now in this
+            # else block so that I can properly use the torsions in the next section
         angles_text = helper.generate_angles_text(pseudo_angles, THETA_HELIX, THETA_MOD_FORCE, predictions=False)
 
 
@@ -257,6 +263,10 @@ if __name__ == '__main__':
                         "by the secondary structure prediction mechanisms. Passing this flag sets the variable to FALSE. "
                         "Default value is True.",
                         action="store_false", default=True)
+    parser.add_argument('-number_of_protein_beads', help="The number of total CG beads/atoms that will be in the "
+                        "protein represented by the .itp file. This is necessary if you pass no_structure_prediction. "
+                        "I'm making it required so that I never forget it.",
+                        required=True, type=int)
     parser.add_argument('-structure_prediction', help="Please provide the name of the tool used to make secondary structure "
                         "predictions. Choose out of these options: 'deepcoil', 'psipred', 's4pred'", type=str)
     parser.add_argument('-sp_data', help="File name of domain/secondary structure prediction output. Current"
@@ -277,6 +287,7 @@ if __name__ == '__main__':
     FASTA = args.fastafile
     MOLTYPE = args.molecule_type_name
     doIUsePrediction = args.no_structure_prediction
+    NUMBEADS = args.number_of_protein_beads
     PREDICTION = args.structure_prediction
     STRFILE = args.sp_data
     OUTNAME = args.output_file
@@ -288,4 +299,4 @@ if __name__ == '__main__':
         PROTEIN ITP MAKER
             This is where the itp file will be assembled!!
     """
-    write_itp_text(FASTA, MOLTYPE, PREDICTION, STRFILE, OUTNAME, doIUsePrediction, FSCALAR)
+    write_itp_text(FASTA, MOLTYPE, PREDICTION, STRFILE, OUTNAME, doIUsePrediction, FSCALAR, NUMBEADS)

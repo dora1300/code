@@ -124,7 +124,10 @@ def load_calculated_sigmas(SIGMA_BY_MATRIX=True, SIGMA_MATRIX_FILE=None,
         # calculate a matrix of sigmas based on a list of sigmas for each amino acid.
         # these must be combined. The list of sigmas MUST be in alphabetical order as
         # specified above. The file MUST be .csv
-        sigma_aa_list = np.loadtxt(SIGMA_AA_NAME, delimiter=',', dtype=float)
+        sigma_aa_list = np.loadtxt(SIGMA_AA_NAME, 
+                                   delimiter=',', 
+                                   dtype=float,
+                                   encoding="utf-8-sig")
         for I in range(len(sigma_aa_list)):
             for J in range(I, len(sigma_aa_list)):
                 sigma_matrix_manual[I][J] = CR(sigma_aa_list[I], sigma_aa_list[J])

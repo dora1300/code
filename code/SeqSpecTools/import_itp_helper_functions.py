@@ -8,14 +8,53 @@ Basically all the functions that are used by make_protein_itp.py live in here. T
 """
 import numpy as np
 
+def basic_angle_list_generator(start, end):
+    """
+    Description:
+        A very basic list generator for return a list of indices that correspond to 
+        pseudo-angles. Use with caution because this is very dumb but generates lists
+        well.
+    Arguments:
+        Start       : (int) the start index for the angles
+        End         : (end) the end index for the angles
+    Returns:
+    """
+    list_of_basic_angles = []
+
+    for i in range(start, end-1):
+        list_of_basic_angles.append([i, i+1, i+2])
+    
+    return list_of_basic_angles
+
+
+def basic_torsion_list_generator(start, end):
+    """
+    Description:
+        A very basic list generator for return a list of indices that correspond to 
+        pseudo-torsions. Use with caution because this is very dumb but generates lists
+        well.
+    Arguments:
+        Start       : (int) the start index for the torsions
+        End         : (end) the end index for the torsions
+    Returns:
+    """
+    list_of_basic_torsions = []
+
+    for i in range(start, end-2):
+        list_of_basic_torsions.append([i, i+1, i+2, i+3])
+    
+    return list_of_basic_torsions
+
+
 def generate_atom_text(PROT_SEQUENCE, AAS_ONE_LETTER, AAS_LIST, AA_MASS):
     """
     Description:
         [ atoms ]
         ;nr    type    resnr    residue    atom    cgnr    charge    mass
     Arguments:
-    Returns:        [string] all the text for the [ atoms ] directive that will go into the 
-    itp file.
+    Returns:        
+        [string] all the text for the [ atoms ] directive that will go into the 
+        itp file.
     """
 
     output_text = f"""
@@ -80,6 +119,9 @@ def generate_angles_text(pseudoangles, equil_value, angle_force, predictions=Tru
         [ angles ]
         ;i    j    k    func   theta0 (deg)    Ktheta (kJ/mol/rad^2)
     Arguments:
+        pseudoangles    : a list of lists that contains the atom indices corresponding to
+                          pseudoangles. The format is [[ai1, ai2, ai3], [ai2, ai3, ai4], ...]
+                          where ai = atom index
         predictions     : [True]
     Returns:       
     """
