@@ -94,7 +94,7 @@ def analyze_orientation_torsions(codename,
             axs[1].set_title(f"coil{1}--coil{3}")
         axs[0].set_title(f"coil{1}--coil{2}")
     else:
-        axs.hist(n_orient_torsions[:,I], density=True, color="mediumturquoise", bins="sqrt", alpha=0.75)
+        axs.hist(n_orient_torsions, density=True, color="mediumturquoise", bins="sqrt", alpha=0.75)
         axs.set_xlabel("N-terminal torsion (angles)")
         axs.set_ylabel("counts (density)")
         axs.set_xlim(-185, 185)
@@ -119,7 +119,7 @@ def analyze_orientation_torsions(codename,
             axs[1].set_title(f"coil{1}--coil{3}")
         axs[0].set_title(f"coil{1}--coil{2}")
     else:
-        axs.hist(c_orient_torsions[:,I], density=True, color="mediumturquoise", bins="sqrt", alpha=0.75)
+        axs.hist(c_orient_torsions, density=True, color="mediumturquoise", bins="sqrt", alpha=0.75)
         axs.set_xlabel("N-terminal torsion (angles)")
         axs.set_ylabel("counts (density)")
         axs.set_xlim(-185, 185)
