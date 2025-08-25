@@ -61,23 +61,8 @@ if __name__ == "__main__":
                         "does not necessarily correlate to an actual name that would go into a topology file.",
                         type=str)
 
-    # parser.add_argument("-names_of_proteins", help="[list] Names for the CC protein you wish to simulate, and it must "
-    #                     "correspond to a protein that exists in the validation suite. " 
-    #                     "This will also become the names in the [ moleculetype ] directive. "
-    #                     "You may provide multiple names, for the case of hetero-multimer interactions.", 
-    #                     nargs="+", required=True)
-        # this will also become the molecule name AND the name of the protein.itp file!
-
     parser.add_argument("-run_on_alpine", help="[T/F] Switch: is this being run locally on a laptop, or on Alpine?",
-                        default=False)
-
-    # parser.add_argument('-fastafile', help="[list] File name (and RELATIVE path, if appropriate) of the protein sequence you wish to "
-    #                     "generate topology files for, in FASTA format!", nargs="+", type=str, required=True)
-        # this is also necessary for the protein .itp writer
-
-    # parser.add_argument("-number_of_coils", help="[list] The number of each type of protein (see above) that are being simulated.", 
-    #                     nargs="+", type=int, required=True)
-        # this is also the number that belongs in the molecule_number part of the topology file!
+                        action="store_true", default=False)
 
     parser.add_argument("-simulation_T", help="The temperature at which to run the COM pulling production simulation. "
                         "Default is 298 K.", type=float, default=298.0)
