@@ -1,32 +1,17 @@
 """
-@Title:             model_maker.py
+@Title:             ssff_model_maker.py
 @Name:              Mando A Ramirez
-@Date:              2022 05 27
+@Date:              2025 03 06
 
 @Description:       This script is the main model maker for my coil models -- this produces the 3D atomistic and CA
-coarse-grained starting structures for each model. This is an adaptation of the script I used in the DAR3-25 series
-to make linkers. Now, it will be used to make the whole model.
-
-IMPORTANTLY, it will take the SAME model_design.csv type of file used in the topology writing script
-"coil_topology_assistant.py" because this script will incorporate different amino acids based on the different segments.
-Specifically, it will assign the following:
-    Coil sticky beads = ILE
-    Multimer beads = LYS (pos 'e') and GLU (pos 'g')
-    Inert beads in coils = ALA
-    Inert beads in linkers = GLY
-
-These amino acid assignments do not mean anything "physical" in the simulations, but they will be useful in handling PDB
-files. I'm specifically thinking that it will be useful when selecting specific regions of models in PyMOL.
-    Also, the DAR3-25 version of this script relied on a separate file titled "tozzini_converter.py" for some of the
-math analysis. I am putting all those functions in this file to make things easier.
+coarse-grained starting structures for each model. This is essentially the same script I use for my first 
+framework, but now repurposed for the SSFF framework.
 
 @Updates:
-2022 10 28 -- updated to fix the model file parsing, so that I can remove comments.
+2025 03 07      -   I am adding a new feature to convert and existing PDB structure into CA representation so I 
+don't have to open a PDB structure, pull out the CAs, and then resave. Hopefully this will save me time in the
+long run.
 
-2022 06 01 -- updated to correctly handling comments, which needs file decoding. Also updated the protein sequence so
-that positions 'e' are LYS and 'g' are GLU
-
-2025 07 16 -- updated the assertions to actually print what the problem it.
 """
 
 import math as m
@@ -101,6 +86,19 @@ def ALPHA_COMPLEX(T, Y1, Y2, Phi, Psi):
 """
 Peptide Builder Functions
 """
+def fasta_parser(FASTA_FILE):
+    with open(FASTA_FILE, 'r') as sequence_file:
+        line_counter = 1
+        for line in sequence_file:
+            if line_counter == 1:
+                pass
+            elif line_counter == 2:
+                protein_sequence = line.rstrip("\n")
+            else:
+                break
+            line_counter += 1
+    return protein_sequence
+
 def build_peptide(PeptideName, Sequence):
     """
     This function makes the starting structure of a given coil model. It only operates in a single directory,
@@ -154,6 +152,44 @@ def build_peptide(PeptideName, Sequence):
     return None
 
 
+def convert_pdb(pdb_filename, Sequence, PeptideName):
+    # ATTENTION -- this is a complete copy from the code above! Because it's already there.
+    # Now this part of the code will reopen this fully atomistic structure, read the torsion angles of it and convert into
+    # Tozzini space, then save the C-alpha coarse grained model. It will also save the torsions and the pseudotorsions into
+    # and output file
+    ca_name = f"{PeptideName}_ca.pdb"
+    output_file = f"{PeptideName}_aa_dihedrals.csv"
+
+    linker_pdb = pd.parsePDB(pdb_filename)
+    hv = pd.HierView(linker_pdb)
+    outfile = open(output_file, 'w')
+    outfile.write("Residue No.,Residue Name,phi (deg),psi (deg),alpha (deg),theta (deg)\n")
+    #    Calculate the torsion angles and the pseudo angles and then put into the output file
+    #    Keep in mind that ProDy 1-INDEXES the residues
+    for i in range(1, len(Sequence) + 1):
+        if i == 1 or i == len(Sequence):
+            outfile.write(f"{i},{hv.getResidue('A', i).getResname()}\n")
+        else:
+            phi = pd.calcPhi(hv.getResidue('A', i))
+            psi = pd.calcPsi(hv.getResidue('A', i))
+            phi_r = phi * (np.pi / 180)
+            psi_r = psi * (np.pi / 180)
+            theta = THETA(t_r, y1_r, y2_r, phi_r, psi_r)
+            alpha = ALPHA_COMPLEX(t_r, y1_r, y2_r, phi_r, psi_r)
+            outfile.write(f"{i},{hv.getResidue('A', i).getResname()},{phi:.2f},{psi:.2f},{alpha:.2f},{theta:.2f}\n")
+    outfile.close()
+    # Lastly, save the structure in CA form
+    linker_ca = linker_pdb.select("name CA")
+    pd.writePDB(ca_name, linker_ca)
+    return None
+
+
+
+
+
+"""
+Run the code here!
+"""
 if __name__ == "__main__":
     # I don't anticipate needing to use the functions in this script elsewhere, so the
     # name==main style is a little overkill, but I'm including it here for good pythonic practice
@@ -162,79 +198,32 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Model Maker Tool -- use this to turn your desired CC protein into"
                                                  " a starting PDB structure! Easy, and corresponds with the Topology"
                                                  " Assistant too. Spreads on easy, like Ubik!")
-    parser.add_argument("-df", help="Design file: this contains the information on how to build the protein, with"
-                                    " alternating coil and linker segments.")
-    parser.add_argument("-n", help="The number of beads in the CC protein.", type=int, required=True)
+    parser.add_argument("-fasta", help="The fasta file containing the sequence of your protein of interest!")
+    parser.add_argument("-conversion", help="Switch. Pass this flag to turn on conversion only.",
+                        action="store_true")
+    parser.add_argument("-convert_pdb", help="The file name (plus extension) (plus path) of a PDB file you "
+                        "wish to convert into C-alpha coarse graining through Tozzini calculations.", 
+                        default=None)
+    parser.add_argument("-n", help="The number of beads in the CC protein. This is useful for sanity checking.",
+                        type=int)
     parser.add_argument("-name", help="The name you'd like to give the CC protein. No "
                                       "extensions, please!", type=str, default="coil_model")
+    
 
     # parse the arguments
     args = parser.parse_args()
+    fasta_input = args.fasta
+    protein_length = args.n
+    protein_name = args.name
+    pdb_file = args.convert_pdb
 
-    # --> This code is taken from the "topology_assistant_nonspecific_modularModel.py" script that I have.
-    # this handles (ignores) comments
-    # set up the list of segments, in order, and their corresponding indices, in order
-    # Segments contains the names of each of the segments as they appear in order in the provided file
-    # Positions contains the start/stop (and heptad) indices for the segments that correspond to the same index in the
-    # Segments list
-    Segments = []; Positions = []
-    with open(args.df, "r", encoding="utf-8-sig") as file:
-        for line in file:
-            if line[0] == "#":
-                # I am now adding in comment support. Comments can exist in the model generation file and can be denoted
-                # as "#"
-                continue
-            else:
-                line_split = line.rstrip("\n").split(",")
-                Segments.append(str(line_split[0]))
-                if str(line_split[0]) == "coil":   # uses 0-indexing, this now handles the final column being oligo type
-                    Positions.append([int(line_split[1]), int(line_split[2]), int(line_split[3]),
-                                    str(line_split[4]), line_split[5]])  # notice that index 5 has no type command!!!
-                else:
-                    Positions.append([int(line_split[1]), int(line_split[2])])
+    prot_fasta_sequence = fasta_parser(fasta_input)
 
-    # Now parse the model_design data and interpret the sequence
-    model_sequence = ""
-    for i in range(len(Segments)):
-        seg = Segments[i]
-        segStart = Positions[i][0]
-        segStop = Positions[i][1]
-        if seg == "linker":     # linker handling
-            model_sequence += "G" * (segStop - segStart + 1)
-        else:                   # coil handling
-            a_posits = []
-            d_posits = []
-            e_posits = []
-            g_posits = []
-            a_index = Positions[i][2]
-            d_index = Positions[i][2] + 3
-            e_index = Positions[i][2] + 4
-            g_index = Positions[i][2] + 6
-            while a_index <= segStop:
-                a_posits.append(a_index)
-                a_index += 7
-            while d_index <= segStop:
-                d_posits.append(d_index)
-                d_index += 7
-            for c_i in range(segStart, segStop+1):
-                if c_i in a_posits:
-                    model_sequence += "I"
-                elif c_i in d_posits:
-                    model_sequence += "I"
-                elif c_i in e_posits:
-                    model_sequence += "A"
-                elif c_i in g_posits:
-                    model_sequence += "A"
-                else:
-                    model_sequence += "A"
-
-    #verify that the length provided in the arguments matches the last position in the model design parameters matches
-    # the length of the sequence
-    assert args.n == Positions[-1][1], f"The size provided in the arguments ({args.n}) does not " \
-                                       f"match the size of the model in the file " \
-                                       f"({Positions[-1][1]})"
-    assert args.n == len(model_sequence), f"The size provided in the arguments ({args.n}) does not " \
-                                          f"match the size of the model the sequence made " \
-                                          f"({len(model_sequence)})."
-
-    build_peptide(args.name, model_sequence)
+    if args.conversion:
+        # this step will only happen if I turn on conversion, since all I have to do is convert the existing file!
+        convert_pdb(pdb_file, prot_fasta_sequence, protein_name)
+    else:
+        # otherwise, make a brand new structure file for the provided sequence.
+        assert len(prot_fasta_sequence) == args.n, f"The sequence detected in the fasta file does not match the number of beads "\
+                                            f"that are expected."
+        build_peptide(protein_name, pprot_fasta_sequence)
