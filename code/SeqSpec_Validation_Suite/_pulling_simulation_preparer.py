@@ -49,6 +49,11 @@ if __name__ == "__main__":
                         "on a finished simulation. Should save some time if you need to reanalyze.",
                         action="store_true", default=False)
 
+    parser.add_argument("-reconvert_trajectories", help="[T/F] switch. Toggle this if you need to reconvert "
+                        "the trajectories for any reason. This command will only make sense if you also pass "
+                        "-rerun_analysis.",
+                        action="store_true", default=False)
+
     #
     #   The basic general arguments
     #
@@ -418,6 +423,55 @@ if __name__ == "__main__":
         this seems unnecessary but this allows me to neatly rerun analyses)
     """
     os.chdir(f"{pro_sim_dir}/md")
+
+    if args.reconvert_trajectories:
+        input_selection = b"10 0\n"
+        if args.run_on_alpine:
+            convert_text = f"mpirun -np 1 gmx_mpi trjconv -f {args.protein_codename}_md.xtc " \
+                f"-s md_{args.protein_codename}.tpr -pbc whole -center -o {args.protein_codename}_centered.xtc " \
+                f"-n ../starting_structure/index_{args.protein_codename}.ndx"
+            
+            final_frame_txt = f"mpirun -np 1 gmx_mpi trjconv -f {args.protein_codename}_md.xtc " \
+                f"-s md_{args.protein_codename}.tpr -pbc whole -center -o final_frame.pdb " \
+                f"-b 500000 -e 500000 -n ../starting_structure/index_{args.protein_codename}.ndx"
+            
+            start_frame_txt = f"mpirun -np 1 gmx_mpi trjconv -f {args.protein_codename}_md.xtc " \
+                f"-s md_{args.protein_codename}.tpr -pbc whole -center -o starting_frame.pdb " \
+                f"-b 0 -e 0 -n ../starting_structure/index_{args.protein_codename}.ndx"
+        else:
+            convert_text = f"gmx trjconv -f {args.protein_codename}_md.xtc " \
+                f"-s md_{args.protein_codename}.tpr -pbc whole -center -o {args.protein_codename}_centered.xtc " \
+                f"-n ../starting_structure/index_{args.protein_codename}.ndx"
+            
+            final_frame_txt = f"gmx trjconv -f {args.protein_codename}_md.xtc " \
+                f"-s md_{args.protein_codename}.tpr -pbc whole -center -o final_frame.pdb " \
+                f"-b 500000 -e 500000 -n ../starting_structure/index_{args.protein_codename}.ndx"
+            
+            start_frame_txt = f"gmx trjconv -f {args.protein_codename}_md.xtc " \
+                f"-s md_{args.protein_codename}.tpr -pbc whole -center -o starting_frame.pdb " \
+                f"-b 0 -e 0 -n ../starting_structure/index_{args.protein_codename}.ndx"
+            
+        # This part converts the trajectory so that it's centered on the first coil 'coil-1'
+        convert_cmd = convert_text.split()
+        convert_process = subprocess.Popen(convert_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = convert_process.communicate(input=input_selection)
+        print("STDOUT:", stdout.decode())
+        print("STDERR:", stderr.decode())
+
+        # this generates the final_frame.pdb for mdtraj stuff
+        finalframe_cmd = final_frame_txt.split()
+        finalframe_process = subprocess.Popen(finalframe_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = finalframe_process.communicate(input=input_selection)
+        print("STDOUT:", stdout.decode())
+        print("STDERR:", stderr.decode())
+
+        # this generates the starting_frame.pdb because thats also useful
+        startframe_cmd = start_frame_txt.split()
+        startframe_process = subprocess.Popen(startframe_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = startframe_process.communicate(input=input_selection)
+        print("STDOUT:", stdout.decode())
+        print("STDERR:", stderr.decode())
+
     simtraj = md.load(f"{args.protein_codename}_centered.xtc", top="final_frame.pdb")
     analyzer.analyze_angles_and_dihedrals(args.protein_codename,
                                           simtraj,
