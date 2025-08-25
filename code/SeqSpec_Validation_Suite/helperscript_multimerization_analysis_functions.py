@@ -82,16 +82,24 @@ def analyze_orientation_torsions(codename,
 
     LEN_TOR = len(n_cis_torsion)
     fig, axs = plt.subplots(ncols=LEN_TOR, nrows=1, figsize=(5*LEN_TOR, 5))
-    for I in range(len(n_cis_torsion)):
-        axs[I].hist(n_orient_torsions[:,I], density=True, color="mediumturquoise", bins="sqrt", alpha=0.75)
-        axs[I].set_xlabel("N-terminal torsion (angles)")
-        axs[I].set_ylabel("counts (density)")
-        axs[I].set_xlim(-185, 185)
-        # axs[I].set_title(f"coil{I+1}--coil{I+2}")
-        axs[I].grid(color="black", alpha=0.35, linestyle=":")
     if LEN_TOR > 1:
-        axs[1].set_title(f"coil{1}--coil{3}")
-    axs[0].set_title(f"coil{1}--coil{2}")
+        for I in range(len(n_cis_torsion)):
+            axs[I].hist(n_orient_torsions[:,I], density=True, color="mediumturquoise", bins="sqrt", alpha=0.75)
+            axs[I].set_xlabel("N-terminal torsion (angles)")
+            axs[I].set_ylabel("counts (density)")
+            axs[I].set_xlim(-185, 185)
+            # axs[I].set_title(f"coil{I+1}--coil{I+2}")
+            axs[I].grid(color="black", alpha=0.35, linestyle=":")
+        if LEN_TOR > 1:
+            axs[1].set_title(f"coil{1}--coil{3}")
+        axs[0].set_title(f"coil{1}--coil{2}")
+    else:
+        axs.hist(n_orient_torsions[:,I], density=True, color="mediumturquoise", bins="sqrt", alpha=0.75)
+        axs.set_xlabel("N-terminal torsion (angles)")
+        axs.set_ylabel("counts (density)")
+        axs.set_xlim(-185, 185)
+        # axs[I].set_title(f"coil{I+1}--coil{I+2}")
+        axs.grid(color="black", alpha=0.35, linestyle=":")
     fig.suptitle("N-terminal orientation torsions")
     plt.tight_layout()
     plt.savefig(f"plot_{codename}_Nterminal_orientation_torsions.png", dpi=300)
@@ -99,16 +107,24 @@ def analyze_orientation_torsions(codename,
 
     LEN_TOR = len(c_cis_torsion)
     fig, axs = plt.subplots(ncols=LEN_TOR, nrows=1, figsize=(5*LEN_TOR, 5))
-    for I in range(len(c_cis_torsion)):
-        axs[I].hist(c_orient_torsions[:,I], density=True, color="mediumorchid", bins="sqrt", alpha=0.75)
-        axs[I].set_xlabel("C-terminal torsion (angles)")
-        axs[I].set_ylabel("counts (density)")
-        axs[I].set_xlim(-185, 185)
-        # axs[I].set_title(f"coil{I+1}--coil{I+2}")
-        axs[I].grid(color="black", alpha=0.35, linestyle=":")
     if LEN_TOR > 1:
-        axs[1].set_title(f"coil{1}--coil{3}")
-    axs[0].set_title(f"coil{1}--coil{2}")
+        for I in range(len(c_cis_torsion)):
+            axs[I].hist(c_orient_torsions[:,I], density=True, color="mediumturquoise", bins="sqrt", alpha=0.75)
+            axs[I].set_xlabel("N-terminal torsion (angles)")
+            axs[I].set_ylabel("counts (density)")
+            axs[I].set_xlim(-185, 185)
+            # axs[I].set_title(f"coil{I+1}--coil{I+2}")
+            axs[I].grid(color="black", alpha=0.35, linestyle=":")
+        if LEN_TOR > 1:
+            axs[1].set_title(f"coil{1}--coil{3}")
+        axs[0].set_title(f"coil{1}--coil{2}")
+    else:
+        axs.hist(c_orient_torsions[:,I], density=True, color="mediumturquoise", bins="sqrt", alpha=0.75)
+        axs.set_xlabel("N-terminal torsion (angles)")
+        axs.set_ylabel("counts (density)")
+        axs.set_xlim(-185, 185)
+        # axs[I].set_title(f"coil{I+1}--coil{I+2}")
+        axs.grid(color="black", alpha=0.35, linestyle=":")
     fig.suptitle("C-terminal orientation torsions")
     plt.tight_layout()
     plt.savefig(f"plot_{codename}_Cterminal_orientation_torsions.png", dpi=300)
