@@ -45,11 +45,11 @@ if __name__ == "__main__":
                         help="I'm not describing this. If you know why and how to use then then feel free. "
                         "Otherwise, don't touch.")
     
-    parser.add_argument("-rerun_analysis", help="[T/F] switch. Toggle this if you want to just rerun the analysis "
+    parser.add_argument("-rerun_analysis", help="[T/F] [default: False] switch. Toggle this if you want to just rerun the analysis "
                         "on a finished simulation. Should save some time if you need to reanalyze.",
                         action="store_true", default=False)
 
-    parser.add_argument("-reconvert_trajectories", help="[T/F] switch. Toggle this if you need to reconvert "
+    parser.add_argument("-reconvert_trajectories", help="[T/F] [default: False] switch. Toggle this if you need to reconvert "
                         "the trajectories for any reason. This command will only make sense if you also pass "
                         "-rerun_analysis.",
                         action="store_true", default=False)
@@ -66,14 +66,14 @@ if __name__ == "__main__":
                         "does not necessarily correlate to an actual name that would go into a topology file.",
                         type=str)
 
-    parser.add_argument("-run_on_alpine", help="[T/F] Switch: is this being run locally on a laptop, or on Alpine?",
+    parser.add_argument("-run_on_alpine", help="[T/F] [default: False] Switch: is this being run locally on a laptop, or on Alpine?",
                         action="store_true", default=False)
 
-    parser.add_argument("-simulation_T", help="The temperature at which to run the COM pulling production simulation. "
-                        "Default is 298 K.", type=float, default=298.0)
+    parser.add_argument("-simulation_T", help="[default: 298] The temperature at which to run the COM pulling production simulation.",
+                        type=float, default=298.0)
     
-    parser.add_argument("-system_name", help="The GROMACS system name that goes into the topology file. Can use default. "
-                        "Default = 'coiled-coil-system'", default="coiled-coil-system", type=str)
+    parser.add_argument("-system_name", help="[default: 'coiled-coil-system'] The GROMACS system name that goes "
+                        "into the topology file. Can use default.", default="coiled-coil-system", type=str)
 
     #
     #   Specific arguments for specifying nonbonded information
@@ -103,17 +103,17 @@ if __name__ == "__main__":
     #                     "used by Dignon et al. 2018 PLOS One?",
     #                     default=False, action="store_true")
     
-    parser.add_argument("-combining_rule", help="The code-name of the combining rule to use for calculating "
+    parser.add_argument("-combining_rule", help="[default: 'lorentz']The code-name of the combining rule to use for calculating "
                         "sigmas. Only 'lorentz' is supported right now.",
                         default="lorentz")
     
-    parser.add_argument("-epsilon_scale_factor", help="[Default None] A factor by which to scale the epsilons provided in the "
+    parser.add_argument("-epsilon_scale_factor", help="[default: 1.0] A factor by which to scale the epsilons provided in the "
                         "epsilon matrix. Each epsilon is scaled multiplicatively by the scale factor, so please "
                         "provide fractional scale factors. e.g. 1 = no change, 0.90 = 90%% of regular "
                         "epsilons, 1.25 means 25%% stronger than reference epsilons etc.", default=1.0,
                         type=float)
     
-    parser.add_argument("-sigma_scale_factor", help="[Default None] A factor by which to scale the sigmas provided in the "
+    parser.add_argument("-sigma_scale_factor", help="[default: 1.0] A factor by which to scale the sigmas provided in the "
                         "sigma matrix. Each sigma is scaled multiplicatively by the scale factor, so please "
                         "provide fractional scale factors. e.g. 1 = no change, 0.90 = 90%% of regular "
                         "sigmas, 1.25 means 25%% stronger than provided sigmas etc.", default=1.0,
@@ -127,11 +127,11 @@ if __name__ == "__main__":
                         "Please include the extension and the path if appropriate!",
                         default="itp_atomtypes.itp")
     
-    parser.add_argument("-atomtypes_attr_term", help="The generic attractive term for the C6 term in the atomtypes.itp "
+    parser.add_argument("-atomtypes_attr_term", help="[default: 6.9132E-03] The generic attractive term for the C6 term in the atomtypes.itp "
                         "file. This is mostly useless but must be provided in the topology.",
                         default=6.9132E-03, type=float)
     
-    parser.add_argument("-atomtypes_repul_term", help="The generic repulsive term for the C12 term in the atomtypes.itp "
+    parser.add_argument("-atomtypes_repul_term", help="[default: 5.97404E-05] The generic repulsive term for the C12 term in the atomtypes.itp "
                         "file. This is mostly useless but must be provided in the topology.",
                         default=5.97404E-05, type=float)
     
@@ -167,8 +167,9 @@ if __name__ == "__main__":
     if args.run_on_alpine:
         CODEDIR = "/projects/dora1300/code/code/SeqSpec_Validation_Suite"
     else:
-        CODEDIR = "/Users/mramirez/OneDrive/SeqSpec_Validation_Suite"
+        CODEDIR = "/home/mando/code/code/SeqSpec_Validation_Suite"
         # this houses all the code and directories necessary 
+        # specific for my linux distribution
 
     # 5- define the path of the working simulation directory specific to this protein
     # PROTNAME will be a combination of all the proteins that are getting simulated
