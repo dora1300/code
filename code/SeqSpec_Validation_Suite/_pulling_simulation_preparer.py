@@ -113,10 +113,10 @@ if __name__ == "__main__":
                         "epsilons, 1.25 means 25%% stronger than reference epsilons etc.", default=1.0,
                         type=float)
     
-    parser.add_argument("-sigma_scale_factor", help="[Default None] A factor by which to scale the epsilons provided in the "
+    parser.add_argument("-sigma_scale_factor", help="[Default None] A factor by which to scale the sigmas provided in the "
                         "sigma matrix. Each sigma is scaled multiplicatively by the scale factor, so please "
                         "provide fractional scale factors. e.g. 1 = no change, 0.90 = 90%% of regular "
-                        "sigmas, 1.25 means 25%% stronger than reference sigmas etc.", default=1.0,
+                        "sigmas, 1.25 means 25%% stronger than provided sigmas etc.", default=1.0,
                         type=float)
     
     #  
@@ -197,7 +197,8 @@ if __name__ == "__main__":
         else:
                 os.mkdir(f"{pro_sim_dir}")
                 os.chdir(f"{pro_sim_dir}")
-                os.mkdir("top"); os.mkdir("mdp"); os.mkdir("em"); os.mkdir("md"); 
+                os.mkdir("top"); os.mkdir("mdp"); os.mkdir("em"); os.mkdir("md")
+                os.mkdir(f"analysis_{args.protein_codename}")
                 os.mkdir("starting_structure")
 
         # updated 20250821 - simpler (I think) way of copying the starting box_structure and the index files
@@ -424,6 +425,9 @@ if __name__ == "__main__":
     """
     os.chdir(f"{pro_sim_dir}/md")
 
+
+    # first step is to reconvert trajectories if necessary. Just a simple flag to deal with in the 
+    # arguments.
     if args.reconvert_trajectories:
         input_selection = b"10 0\n"
         if args.run_on_alpine:
@@ -472,15 +476,28 @@ if __name__ == "__main__":
         print("STDOUT:", stdout.decode())
         print("STDERR:", stderr.decode())
 
+    
+
+    # Now I can handle the analysis
+
     simtraj = md.load(f"{args.protein_codename}_centered.xtc", top="final_frame.pdb")
     analyzer.analyze_angles_and_dihedrals(args.protein_codename,
                                           simtraj,
                                           ENV_INFO[3])
+    shutil.copyfile(f"plot_{args.protein_codename}_backbone_angles.png",
+                    f"../analysis_{args.protein_codename}/plot_{args.protein_codename}_backbone_angles.png")
+    
     analyzer.analyze_orientation_torsions(args.protein_codename,
                                           simtraj,
                                           ENV_INFO[4],
                                           ENV_INFO[5])
+    shutil.copyfile(f"plot_{args.protein_codename}_Nterminal_orientation_torsions.png",
+                    f"../analysis_{args.protein_codename}/plot_{args.protein_codename}_Nterminal_orientation_torsions.png")
+    shutil.copyfile(f"plot_{args.protein_codename}_Cterminal_orientation_torsions.png",
+                    f"../analysis_{args.protein_codename}/plot_{args.protein_codename}_Cterminal_orientation_torsions.png")
+
     analyzer.analyze_reference_point_distances(args.protein_codename,
                                                simtraj,
                                                ENV_INFO[6])
-
+    shutil.copyfile(f"plot_{args.protein_codename}_key_ref_distances_1.png",
+                    f"../analysis_{args.protein_codename}/plot_{args.protein_codename}_key_ref_distances_1.png")
