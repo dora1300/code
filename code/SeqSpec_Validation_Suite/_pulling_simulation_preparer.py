@@ -303,7 +303,7 @@ if __name__ == "__main__":
         """
         os.chdir(f"{pro_sim_dir}/mdp")
         mdp_writer.write_em_mdp_text()
-        mdp_writer.write_md_pulling_mdp_text(TEMP, ENV_INFO[2])
+        mdp_writer.write_md_pulling_mdp_text(TEMP, ENV_INFO[2], pull_init=args.pulling_coordinate_distance)
         
 
 
