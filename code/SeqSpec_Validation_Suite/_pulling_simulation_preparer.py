@@ -143,6 +143,10 @@ if __name__ == "__main__":
                         type=str, default="top_cc.top")
     
 
+    parser.add_argument('-pulling_coordinate_distance', help="[default: 2.0] The distance you want to start the COM pulling [nm]. ",
+                        type=float, default=2.0)
+    
+
 
 
     """

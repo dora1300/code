@@ -56,7 +56,8 @@ def write_md_pulling_mdp_text(
     temp,
     pull_groups,
     md_mdp_file_name="md_pulling.mdp",
-    vbt="1E-12"
+    vbt="1E-12",
+    pull_init="2"
 ):
     """
     Description:
@@ -124,7 +125,7 @@ ref-t                   = {temp}      ; in units of (K)
 """
 
     if int(pull_groups) == 2:
-        md_file_text += """
+        md_file_text += f"""
 ; ---- COM Pulling
 pull                    = yes
 pull-nstfout            = 100
@@ -138,13 +139,13 @@ pull-coord1-type        = flat-bottom
 pull-coord1-geometry    = distance
 pull-coord1-groups      = 1 2
 pull-coord1-start       = no
-pull-coord1-init        = 2.0           ; [nm]
+pull-coord1-init        = {pull_init}           ; [nm]
 pull-coord1-dim         = Y Y Y
 pull-coord1-k           = 2000            ; [kJ/mol/nm^2]
 
 """
     else:
-        md_file_text += """
+        md_file_text += f"""
 ; ---- COM Pulling
 pull                    = yes
 pull-nstfout            = 100
@@ -159,7 +160,7 @@ pull-coord1-type        = flat-bottom
 pull-coord1-geometry    = distance
 pull-coord1-groups      = 1 2
 pull-coord1-start       = no
-pull-coord1-init        = 2.0           ; [nm]
+pull-coord1-init        = {pull_init}           ; [nm]
 pull-coord1-dim         = Y Y Y
 pull-coord1-k           = 2000          ; [kJ/mol/nm^2]
 
@@ -167,7 +168,7 @@ pull-coord2-type        = flat-bottom
 pull-coord2-geometry    = distance
 pull-coord2-groups      = 1 3
 pull-coord2-start       = no
-pull-coord2-init        = 2.0           ; [nm]
+pull-coord2-init        = {pull_init}           ; [nm]
 pull-coord2-dim         = Y Y Y
 pull-coord2-k           = 2000          ; [kJ/mol/nm^2]
 
