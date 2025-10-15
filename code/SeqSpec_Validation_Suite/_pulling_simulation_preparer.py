@@ -143,7 +143,13 @@ if __name__ == "__main__":
                         type=str, default="top_cc.top")
     
 
-    parser.add_argument('-pulling_coordinate_distance', help="[default: 2.0] The distance you want to start the COM pulling [nm]. ",
+    #
+    #   This is an interesting one -- options for specifying different parameters in the .mdp files
+    #       You shouldn't really need to change these values, 
+    #       but they can be changed if there is a good reason to do so.
+    #
+    parser.add_argument('-pulling_coordinate_distance', help="[default: 2.0] The distance at which the COM "
+                        "pulling starts and the potential well kicks in [nm]. ",
                         type=float, default=2.0)
     
 
@@ -505,4 +511,4 @@ if __name__ == "__main__":
                                                simtraj,
                                                ENV_INFO[6])
     shutil.copyfile(f"plot_{args.protein_codename}_key_ref_distances_1.png",
-                    f"../analysis_{args.protein_codename}/plot_{args.protein_codename}_key_ref_distances_1.png")
+                    f"../analysis_{args.protein_codename}/plot_{args.protein_codename}_key_ref_distances_0.png")
