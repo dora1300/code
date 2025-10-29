@@ -254,6 +254,7 @@ def analyze_reference_point_distances(codename,
     plt.ylabel("fraction of simulation frames")
     plt.tight_layout()
     plt.savefig(f"plot_{codename}_areCoilsInMultimer.png", dpi=300)
+    plt.close()
 
     
     # keep in mind there can be multiple sets of reference points for multimers greater than a dimer
@@ -292,7 +293,7 @@ def analyze_reference_point_distances(codename,
         plt.savefig(f"plot_{codename}_key_ref_distances_{i}.png", dpi=300)
         plt.close()
 
-    return None
+    return fraction_of_frames_in_multimer, fraction_of_frames_in_wrong_multimer
 
 
 
@@ -351,3 +352,6 @@ def analyze_ETE_distances(codename,
     plt.ylabel(f"fraction of \nsimulation frames")
     plt.tight_layout()
     plt.savefig(f"plot_{codename}_ETE_fraction_frame.png", dpi=300)
+    plt.close()
+
+    return coil1_frac_correct, coil2_frac_correct

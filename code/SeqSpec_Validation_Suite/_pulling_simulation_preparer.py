@@ -25,6 +25,7 @@ import write_seqspec_top_file as write_top
 import importonly_write_com_pulling_mdp_files as mdp_writer
 import helperscript_multimerization_analysis_functions as analyzer
 import mdtraj as md
+import numpy as np
 # import numpy as np
 # import matplotlib.pyplot as plt
 
@@ -507,7 +508,7 @@ if __name__ == "__main__":
     shutil.copyfile(f"plot_{args.protein_codename}_Cterminal_orientation_torsions.png",
                     f"../analysis_{args.protein_codename}/plot_{args.protein_codename}_Cterminal_orientation_torsions.png")
 
-    analyzer.analyze_reference_point_distances(args.protein_codename,
+    fracframe_correct_multimer, fracframes_wrong_multimer = analyzer.analyze_reference_point_distances(args.protein_codename,
                                                simtraj,
                                                ENV_INFO[6])
     shutil.copyfile(f"plot_{args.protein_codename}_key_ref_distances_0.png",
@@ -517,10 +518,21 @@ if __name__ == "__main__":
     shutil.copyfile(f"{args.protein_codename}_areCoilsInMultimer_by_frame.csv",
                     f"../analysis_{args.protein_codename}/{args.protein_codename}_areCoilsInMultimer_by_frame.csv")
     
-    analyzer.analyze_ETE_distances(args.protein_codename,
+    coil1_frac_correct_ETE, coil2_frac_correct_ETE = analyzer.analyze_ETE_distances(args.protein_codename,
                                    simtraj,
                                    ENV_INFO[3])
     shutil.copyfile(f"plot_{args.protein_codename}_ETE_fraction_frame.png",
                     f"../analysis_{args.protein_codename}/plot_{args.protein_codename}_ETE_fraction_frame.png")
     shutil.copyfile(f"{args.protein_codename}_ETEs_fraction_frame_correct.csv",
                     f"../analysis_{args.protein_codename}/{args.protein_codename}_ETEs_fraction_frame_correct.csv")
+    
+
+    # At this point I'm also adding some preparative work for the heat map information
+    score_correct_multimer = fracframe_correct_multimer * ((coil1_frac_correct_ETE+coil2_frac_correct_ETE)/2)
+    score_total_multimer = (fracframe_correct_multimer + fracframes_wrong_multimer) * ((coil1_frac_correct_ETE+coil2_frac_correct_ETE)/2)
+
+    np.savetxt(f"heatmap_{args.protein_codename}_correct_and_total_multimer.csv", 
+               np.array([score_correct_multimer, score_total_multimer]),
+               delimiter=",", fmt="%1.5f")
+    shutil.copyfile(f"heatmap_{args.protein_codename}_correct_and_total_multimer.csv",
+                    f"../analysis_{args.protein_codename}/heatmap_{args.protein_codename}_correct_and_total_multimer.csv")
