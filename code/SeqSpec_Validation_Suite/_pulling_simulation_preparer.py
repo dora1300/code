@@ -533,7 +533,9 @@ if __name__ == "__main__":
     score_total_multimer = (fracframe_correct_multimer + fracframes_wrong_multimer) * ((coil1_frac_correct_ETE+coil2_frac_correct_ETE)/2)
 
     np.savetxt(f"heatmap_{args.protein_codename}_correct_and_total_multimer.csv", 
-               np.array([score_correct_multimer, score_incorrect_multimer, score_total_multimer]),
+               np.array([score_correct_multimer, score_incorrect_multimer, score_total_multimer,
+                         fracframe_correct_multimer, fracframes_wrong_multimer,
+                         coil1_frac_correct_ETE, coil2_frac_correct_ETE]),
                delimiter=",", fmt="%1.5f")
     shutil.copyfile(f"heatmap_{args.protein_codename}_correct_and_total_multimer.csv",
                     f"../analysis_{args.protein_codename}/heatmap_{args.protein_codename}_correct_and_total_multimer.csv")
