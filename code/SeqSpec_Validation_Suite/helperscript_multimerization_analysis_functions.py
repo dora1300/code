@@ -3,11 +3,7 @@ import matplotlib.pyplot as plt
 plt.rcParams['font.size'] = 14
 import mdtraj as md
 
-# def analyze_orientation_torsions(traj, 
-#                        coil_length_list,
-#                        n_cis_torsion,
-#                        c_cis_torsion,
-#                        distance_reference_points):
+
 def analyze_angles_and_dihedrals(codename,
                        traj, 
                        coil_length_list):
@@ -75,10 +71,12 @@ def analyze_orientation_torsions(codename,
     #   *don't forget to convert to angles*
     # Keep in mind that n_cis_torsion and c_cis_torsion can have multiple arrays which define 
     # torsions, this is applicable for trimers and greater multimers
-    zero_time_n_torsions = md.compute_dihedrals(traj[0], np.array(n_cis_torsion), periodic=True) * 180 / np.pi
-    zero_time_c_torsions =md.compute_dihedrals(traj[0], np.array(c_cis_torsion), periodic=True) * 180 / np.pi
     n_orient_torsions = md.compute_dihedrals(traj, np.array(n_cis_torsion), periodic=True) * 180 / np.pi
     c_orient_torsions = md.compute_dihedrals(traj, np.array(c_cis_torsion), periodic=True) * 180 / np.pi
+
+    zero_time_n_torsions = n_orient_torsions[0] # converts to degrees!
+    zero_time_c_torsions = c_orient_torsions[0]
+
 
     LEN_TOR = len(n_cis_torsion)
     fig, axs = plt.subplots(ncols=LEN_TOR, nrows=1, figsize=(5*LEN_TOR, 5))
@@ -134,17 +132,135 @@ def analyze_orientation_torsions(codename,
 
 
 
+def helper_are_distances_a_real_multimer(dist_arr, cutoff, acceptable_frac_dists):
+    """
+    :args:
+        dist_arr
+        cutoff
+        acceptable_frac_dists
+    """
+    acceptable = 0
+    unacceptable = 0
+    for distance in dist_arr:
+        if distance <= cutoff:
+            acceptable += 1
+        else:
+            unacceptable += 1
+    
+    if (acceptable / (acceptable + unacceptable)) >= acceptable_frac_dists:
+        return True
+    else:
+        return False
+    
+
+def helper_are_all2all_distances_a_multimer(all2all_dists, cutoff, acceptable_frac_dists):
+    beads_that_are_making_contacts = 0
+    beads_not_making_contacts = 0
+    for beadi_distances in all2all_dists:
+        if ((beadi_distances <= cutoff)).any():
+            beads_that_are_making_contacts += 1
+        else:
+            beads_not_making_contacts += 1
+    
+    if (beads_that_are_making_contacts / (beads_that_are_making_contacts + beads_not_making_contacts)) >= acceptable_frac_dists:
+        return True
+    else:
+        return False
+
+
+
 def analyze_reference_point_distances(codename,
                        traj, 
-                       distance_reference_points):
+                       distance_reference_points,
+                       core_cutoff:float=0.9,
+                       acceptable_threshold:float=0.75,
+                       mismatch_cutoff:float=1.2):
+    """
+    :args:
+        individual_coil_lengths : (list)
+        core_cutoff : [nm]
+            the distance cut-off for determining if a given set of reference points is 
+            participating in a multimer. Only counts for reference points that are not defined as the termini
+        acceptable_threshold :
+
+        com_cutoff : [nm]
+
+    """
+
     # Calculate the distances of the reference pairs
     reference_distances = md.compute_distances(traj, 
                             np.array(distance_reference_points),
                             periodic=True)
+        # this calculates the distances for all reference points for ALL the frames in the provided trajectory
+
+
+    # for me to do this analysis correctly and robustly, I need to separate out the reference beads into
+    # arrays so that all beads within the same coil stay together
+    # rows = the number of pairs of beads used to define reference points between coils
+    # columns = the number of coils (which is the length of the distance_reference_points array)
+    # 2025 10 29 == this analysis is only suitable for dimers as of right now!
+    ref_points_by_coil = np.zeros((len(distance_reference_points), 2), dtype=int)
+    for bead_pairs_i, bead_pairs in enumerate(distance_reference_points):
+        ref_points_by_coil[bead_pairs_i][0] = bead_pairs[0]
+        ref_points_by_coil[bead_pairs_i][1] = bead_pairs[1]
+    
+    # I am going to store my multimer analysis into a numpy array
+    # each row is a frame of the trajectory.
+    # Column 1 = correct multimer; Column 2 = bound but incorrect multimer; Column 3 = not bound at all
+    multimer_analysis_table = np.zeros((traj.n_frames, 3))
+
+    for frame_i, frame_ref_dists in enumerate(reference_distances):
+        # Do the reference distances suggest a proper multimer?
+        if helper_are_distances_a_real_multimer(frame_ref_dists, core_cutoff, acceptable_threshold):
+            multimer_analysis_table[frame_i, 0] = 1
+            continue
+        else:
+            # calculate the distances between all the pairs. I gotta see if there is an interaction of any
+            # type happening
+            # This step gets the xyz coordinates for the reference points, which is important for getting the distances
+            # in a vectorized way
+            frame_coil1_ref_points = traj.xyz[frame_i, ref_points_by_coil[0], :]
+            frame_coil2_ref_points = traj.xyz[frame_i, ref_points_by_coil[1], :]
+
+            # this calculates the distances of all points to each other using the vectorized method
+            coil1_to_coil2_ref_point_dists = np.linalg.norm(frame_coil1_ref_points - frame_coil2_ref_points[:, None], axis=-1).T
+            #   STOP!!
+            #   PLEASE REMEMBER!!
+            #   Using the above method -- I need to take the transpose before I do any analysis!!
+            # this checks to see if any of the coils are making a contact that could construed as a multimer.
+            if helper_are_all2all_distances_a_multimer(coil1_to_coil2_ref_point_dists.T, mismatch_cutoff, acceptable_threshold):
+                multimer_analysis_table[frame_i, 1] = 1
+            else:
+                multimer_analysis_table[frame_i, 2] = 1
+
+
+    # at this point, save out the multimer analysis table so I can do things with it
+    np.savetxt(f"{codename}_areCoilsInMultimer_by_frame.csv", multimer_analysis_table, delimiter=",", fmt="%i")
+
+    # also make a plot of the fraction of the type of multimer that coils are in, based on the table above
+    fraction_of_frames_in_multimer = np.sum(multimer_analysis_table.T[0]) / traj.n_frames
+    fraction_of_frames_in_wrong_multimer = np.sum(multimer_analysis_table.T[1]) / traj.n_frames
+    fraction_of_frames_no_multimer = np.sum(multimer_analysis_table.T[2]) / traj.n_frames
+
+    fig, axs = plt.subplots(figsize=(5, 4))
+    plt.bar(np.array([1]), np.array([fraction_of_frames_in_multimer]),
+                color="goldenrod", width=0.65)
+    plt.bar(np.array([2]), np.array([fraction_of_frames_in_wrong_multimer]),
+                color="black", width=0.65)
+    plt.bar(np.array([3]), np.array([fraction_of_frames_no_multimer]),
+                color="grey", width=0.65),
+    plt.xticks([1, 2, 3], [f"Correctly\nbound", f"Incorrectly\nbound", "Unbound"], rotation=50)
+    plt.ylim(0, 1)
+    plt.ylabel("fraction of simulation frames")
+    plt.tight_layout()
+    plt.savefig(f"plot_{codename}_areCoilsInMultimer.png", dpi=300)
+
     
     # keep in mind there can be multiple sets of reference points for multimers greater than a dimer
     # that correspond to the reference poitns between more than two coils
     # But there will always be a multiple of 4 reference points if this is done correctly
+    # TODO -- 2025 10 29, I need to fix this to accurately handle trimers etc. I need a new way of storing my
+    # reference points
     num_unique_ref_points = int(len(distance_reference_points)/4)
 
     for i in range(num_unique_ref_points):
@@ -177,3 +293,61 @@ def analyze_reference_point_distances(codename,
         plt.close()
 
     return None
+
+
+
+
+def analyze_ETE_distances(codename,
+                       traj,
+                       list_of_protein_lengths,
+                       ETE_error_threshold:float=0.80):
+    """
+    :args:
+        - list_of_protein_lengths : [list]
+            a list of 1-indexed lengths (i.e. total beads) in the coils in the system
+            The numbers are in order of the coils present in the system.
+    """
+    # first I will be generating the list of indices that correspond to the starts and ends
+    # of the coils
+    # don't forget = mdtraj = 0-indexed
+    coil_starts_and_ends = []
+    start_tracker = 0
+    for length in list_of_protein_lengths:
+        end_of_coil = start_tracker + (length - 1) # -1 to account for the 0-indexing
+        coil_starts_and_ends.append([start_tracker, end_of_coil])
+        start_tracker += length
+    
+    # now I can calculate the ETEs
+    ETEs = md.compute_distances(traj, np.array(coil_starts_and_ends))
+
+    # The ETEs themselves are interesting, but I also want some metric of how the ETEs change througout the simulation
+    coil1_initial_ete = ETEs[0][0]; coil2_initial_ete = ETEs[0][1]
+    #   this gives each frame's ETE as a fraction of the initial, which is useful for seeing the percent/fractional deviation
+    #   from expected
+    coil1_ete_fraction_of_init = ETEs[:, 0] / coil1_initial_ete
+    coil2_ete_fraction_of_init = ETEs[:, 1] / coil2_initial_ete
+    #   this turns the fractions into 1s and 0s corresponding to correct and incorrect on a frame basis
+    coil1_fraction_frame_correct = np.where(coil1_ete_fraction_of_init < ETE_error_threshold, 0, 1)
+    coil2_fraction_frame_correct = np.where(coil2_ete_fraction_of_init < ETE_error_threshold, 0, 1)
+
+    # now save my data and make a plot
+    np.savetxt(f"{codename}_ETEs.csv", ETEs, delimiter=",", fmt="%1.4f")
+    np.savetxt(f"{codename}_ETEs_fraction_of_initial.csv", 
+               np.array([coil1_ete_fraction_of_init, coil2_ete_fraction_of_init]), delimiter=",", fmt="%1.4f")
+    np.savetxt(f"{codename}_ETEs_fraction_frame_correct.csv", 
+               np.array([coil1_fraction_frame_correct, coil2_fraction_frame_correct]), delimiter=",", fmt="%1.4f")
+
+
+    coil1_frac_correct = np.sum(coil1_fraction_frame_correct)/traj.n_frames
+    coil2_frac_correct = np.sum(coil2_fraction_frame_correct)/traj.n_frames
+
+    fig, ax = plt.subplots(figsize=(5, 3))
+    plt.bar(np.array([1, 4]), np.array([coil1_frac_correct, 1-coil1_frac_correct]),
+            label="Coil 1", color="goldenrod", width=0.75, align="center")
+    plt.bar(np.array([2, 5]), np.array([coil2_frac_correct, 1-coil2_frac_correct]),
+            label="Coil 2", color="grey", width=0.75, align="center")
+    
+    plt.xticks([1.5, 4.5], [f"correct ETE", "incorrect ETE"], rotation=30)
+    plt.ylabel(f"fraction of \nsimulation frames")
+    plt.tight_layout()
+    plt.savefig(f"plot_{codename}_ETE_fraction_frame.png", dpi=300)

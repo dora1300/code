@@ -510,5 +510,17 @@ if __name__ == "__main__":
     analyzer.analyze_reference_point_distances(args.protein_codename,
                                                simtraj,
                                                ENV_INFO[6])
-    shutil.copyfile(f"plot_{args.protein_codename}_key_ref_distances_1.png",
+    shutil.copyfile(f"plot_{args.protein_codename}_key_ref_distances_0.png",
                     f"../analysis_{args.protein_codename}/plot_{args.protein_codename}_key_ref_distances_0.png")
+    shutil.copyfile(f"plot_{args.protein_codename}_areCoilsInMultimer.png",
+                    f"../analysis_{args.protein_codename}/plot_{args.protein_codename}_areCoilsInMultimer.png")
+    shutil.copyfile(f"{args.protein_codename}_areCoilsInMultimer_by_frame.csv",
+                    f"../analysis_{args.protein_codename}/{args.protein_codename}_areCoilsInMultimer_by_frame.csv")
+    
+    analyzer.analyze_ETE_distances(args.protein_codename,
+                                   simtraj,
+                                   ENV_INFO[3])
+    shutil.copyfile(f"plot_{args.protein_codename}_ETE_fraction_frame.png",
+                    f"../analysis_{args.protein_codename}/plot_{args.protein_codename}_ETE_fraction_frame.png")
+    shutil.copyfile(f"{args.protein_codename}_ETEs_fraction_frame_correct.csv",
+                    f"../analysis_{args.protein_codename}/{args.protein_codename}_ETEs_fraction_frame_correct.csv")
