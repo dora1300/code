@@ -267,12 +267,21 @@ def analyze_reference_point_distances(codename,
 
     fig, ax = plt.subplots(ncols=4, nrows=num_rows, figsize=(14, (4*num_rows)))
     for rowaxi, rowax in enumerate(ax):
-        for colaxi, colax in enumerate(rowax):
-            dist_index = (rowaxi * num_rows) + colaxi
+        if num_rows > 1:
+            for colaxi, colax in enumerate(rowax):
+                dist_index = (rowaxi * num_rows) + colaxi
+                try:
+                    colax.hist(reference_distances[:, dist_index], density=True, color="grey", alpha=0.75, bins="sqrt")
+                    colax.set_title(f"dist. b/w {distance_reference_points[dist_index][0]}-{distance_reference_points[dist_index][1]}")
+                    colax.grid(color="black", alpha=0.35, linestyle=":")
+                except IndexError:
+                    pass
+        else:
+            dist_index = rowaxi
             try:
-                colax.hist(reference_distances[:, dist_index], density=True, color="grey", alpha=0.75, bins="sqrt")
-                colax.set_title(f"dist. b/w {distance_reference_points[dist_index][0]}-{distance_reference_points[dist_index][1]}")
-                colax.grid(color="black", alpha=0.35, linestyle=":")
+                rowax.hist(reference_distances[:, dist_index], density=True, color="grey", alpha=0.75, bins="sqrt")
+                rowax.set_title(f"dist. b/w {distance_reference_points[dist_index][0]}-{distance_reference_points[dist_index][1]}")
+                rowax.grid(color="black", alpha=0.35, linestyle=":")
             except IndexError:
                 pass
 
