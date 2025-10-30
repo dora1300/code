@@ -265,14 +265,22 @@ def analyze_reference_point_distances(codename,
     # reference points
     num_rows = math.ceil(int(len(distance_reference_points)) / 4)
 
+    print(np.shape(distance_reference_points))
+
 
     fig, ax = plt.subplots(ncols=4, nrows=num_rows, figsize=(14, (4*num_rows)))
     for rowaxi, rowax in enumerate(ax):
+        print(f"row index: {rowaxi}")
         for colaxi, colax in enumerate(rowax):
+            print(f"col index {colaxi}")
             dist_index = (rowaxi * num_rows) + colaxi
-            colax.hist(reference_distances[:, dist_index], density=True, color="grey", alpha=0.75, bins="sqrt")
-            colax.set_title(f"dist. b/w {distance_reference_points[dist_index][0]}-{distance_reference_points[dist_index][1]}")
-            colax.grid(color="black", alpha=0.35, linestyle=":")
+            print(f"distance index {dist_index}")
+            try:
+                colax.hist(reference_distances[:, dist_index], density=True, color="grey", alpha=0.75, bins="sqrt")
+                colax.set_title(f"dist. b/w {distance_reference_points[dist_index][0]}-{distance_reference_points[dist_index][1]}")
+                colax.grid(color="black", alpha=0.35, linestyle=":")
+            except IndexError:
+                pass
 
     fig.supxlabel("distance (nm)")
     fig.supylabel("counts (density)")
