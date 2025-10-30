@@ -265,12 +265,14 @@ def analyze_reference_point_distances(codename,
     # reference points
     num_rows = math.ceil(int(len(distance_reference_points)) / 4)
 
-    fig, ax = plt.subplots(ncols=4, nrows=num_rows, figsize=(14, (4*num_rows)))
-    for axi, axes in enumerate(ax):
-        ax[axi].hist(reference_distances[:, axi], density=True, color="grey", alpha=0.75, bins="sqrt")
-        ax[axi].set_title(f"dist. b/w {distance_reference_points[axi][0]}-{distance_reference_points[axi][1]}")
-        ax[axi].grid(color="black", alpha=0.35, linestyle=":")
 
+    fig, ax = plt.subplots(ncols=4, nrows=num_rows, figsize=(14, (4*num_rows)))
+    for rowaxi, rowax in enumerate(ax):
+        for colaxi, colax in enumerate(rowax):
+            dist_index = (rowaxi * num_rows) + colaxi
+            colax[dist_index].hist(reference_distances[:, dist_index], density=True, color="grey", alpha=0.75, bins="sqrt")
+            colax[dist_index].set_title(f"dist. b/w {distance_reference_points[dist_index][0]}-{distance_reference_points[dist_index][1]}")
+            colax[dist_index].grid(color="black", alpha=0.35, linestyle=":")
 
     fig.supxlabel("distance (nm)")
     fig.supylabel("counts (density)")
