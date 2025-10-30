@@ -266,10 +266,10 @@ def analyze_reference_point_distances(codename,
     num_rows = math.ceil(int(len(distance_reference_points)) / 4)
 
     fig, ax = plt.subplots(ncols=4, nrows=num_rows, figsize=(14, (4*num_rows)))
-    for axi, axs in enumerate(ax):
-        axs.hist(reference_distances[:, axi], density=True, color="grey", alpha=0.75, bins="sqrt")
-        axs.set_title(f"dist. b/w {distance_reference_points[axi][0]}-{distance_reference_points[axi][1]}")
-        axs.grid(color="black", alpha=0.35, linestyle=":")
+    for axi, axes in enumerate(ax):
+        ax[axi].hist(reference_distances[:, axi], density=True, color="grey", alpha=0.75, bins="sqrt")
+        ax[axi].set_title(f"dist. b/w {distance_reference_points[axi][0]}-{distance_reference_points[axi][1]}")
+        ax[axi].grid(color="black", alpha=0.35, linestyle=":")
 
 
     fig.supxlabel("distance (nm)")
