@@ -9,11 +9,16 @@ codename : [["protein_names_that_go_into_.top", ...],
             [length_of_each_coil,...],
             [[n,term,torsion,indices,...]],
             [[c,term,torsion,indices,...]],
-            [[distance,ref,indices,...]]
+            [[distance,ref,indices,...]],
+            [comments about the structure, for posterity]
             ]
 """
 
 validation_dictionary = {
+
+#
+#       POSITIVE CONTROLS -- THESE SHOULD BIND
+#
     "s1hs2h":[["s1h", "s2h"],
               [1, 1],
               "2",
@@ -79,6 +84,35 @@ validation_dictionary = {
                [2, 66], [12, 76], [16, 80], [26, 90]]
     ],
 
+    "gcn4" : [["gcn4"],
+              [2],
+              "2",
+              [31, 31],
+              [[1, 11, 42, 32]],
+              [[25, 18, 49, 56]],
+              [[1, 32], [8, 39], [11, 42], [15, 46], [18, 49], [25, 56]],
+              ["This comes from PDB code 1ysa. This does not exist in the CC+ database for reasons I don't understand because GCN4 is considered a canonical coiled-coil (leucine zipper).",
+               "delete the final ER from the sequence in 4dmd. The sequence will only be 31 amino acids"]
+
+    ],
+
+    "3n4x" : [["3n4x"],
+              [2],
+              "2",
+              [47, 47],
+              [[0, 14, 61, 47]],
+              [[46, 32, 79, 93]],
+              [[0,47], [4,51], [7,54], [11,58], [14,61], [18,65], 
+               [21,68], [25,72], [28,75], [32,79], [35,82], 
+               [39,86], [42,89], [46,93]],
+              ["from the CC+ database, a longerish coil",
+               "parallel orientation"]
+
+    ],
+
+#
+#       NEGATIVE CONTROLS -- THESE SHOULD NOT BIND
+#
     "gcnh2aph2":[["gcnh2", "aph2"],
                  [1, 1],
                  "2",

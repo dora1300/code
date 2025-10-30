@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.rcParams['font.size'] = 14
 import mdtraj as md
+import math
 
 
 def analyze_angles_and_dihedrals(codename,
@@ -262,36 +263,21 @@ def analyze_reference_point_distances(codename,
     # But there will always be a multiple of 4 reference points if this is done correctly
     # TODO -- 2025 10 29, I need to fix this to accurately handle trimers etc. I need a new way of storing my
     # reference points
-    num_unique_ref_points = int(len(distance_reference_points)/4)
+    num_rows = math.ceil(int(len(distance_reference_points)) / 4)
 
-    for i in range(num_unique_ref_points):
-        fig, (ax1, ax2, ax3, ax4) = plt.subplots(ncols=4, nrows=1, figsize=(14, 4))
-        ax1.hist(reference_distances[:,(0+(i*4))], density=True, color="grey", alpha=0.75, bins="sqrt")
-        ax1.set_title("termini 1")
-        ax1.grid(color="black", alpha=0.35, linestyle=":")
+    fig, ax = plt.subplots(ncols=4, nrows=num_rows, figsize=(14, (4*num_rows)))
+    for axi, axs in enumerate(ax):
+        axs.hist(reference_distances[:, axi], density=True, color="grey", alpha=0.75, bins="sqrt")
+        axs.set_title(f"dist. b/w {distance_reference_points[axi][0]}-{distance_reference_points[axi][1]}")
+        axs.grid(color="black", alpha=0.35, linestyle=":")
 
-        ax2.hist(reference_distances[:,(1+(i*4))], density=True, color="grey", alpha=0.75, bins="sqrt")
-        ax2.set_title("midpoint 1")
-        ax2.grid(color="black", alpha=0.35, linestyle=":")
 
-        ax3.hist(reference_distances[:,(2+(i*4))], density=True, color="grey", alpha=0.75, bins="sqrt")
-        ax3.set_title("midpoint 2")
-        ax3.grid(color="black", alpha=0.35, linestyle=":")
-
-        ax4.hist(reference_distances[:,(3+(i*4))], density=True, color="grey", alpha=0.75, bins="sqrt")
-        ax4.set_title("termini 2")
-        ax4.grid(color="black", alpha=0.35, linestyle=":")
-
-        fig.supxlabel("distance (nm)")
-        fig.supylabel("counts (density)")
-        plt.grid(color="black", alpha=0.35, linestyle=":")
-        fig.suptitle(f"distance of reference points between coil{i+1}--coil{1+2}")
-        if num_unique_ref_points == 2:
-            fig.suptitle(f"coil{1}--coil{3}")
-        fig.suptitle(f"coil{1}--coil{2}")
-        plt.tight_layout()
-        plt.savefig(f"plot_{codename}_key_ref_distances_{i}.png", dpi=300)
-        plt.close()
+    fig.supxlabel("distance (nm)")
+    fig.supylabel("counts (density)")
+    fig.suptitle(f"distance distributions for {codename} ref. points")
+    plt.tight_layout()
+    plt.savefig(f"plot_{codename}_key_ref_distances_0.png", dpi=300)
+    plt.close()
 
     return fraction_of_frames_in_multimer, fraction_of_frames_in_wrong_multimer
 
