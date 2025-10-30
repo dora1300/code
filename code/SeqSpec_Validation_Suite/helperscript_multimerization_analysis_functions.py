@@ -270,9 +270,9 @@ def analyze_reference_point_distances(codename,
     for rowaxi, rowax in enumerate(ax):
         for colaxi, colax in enumerate(rowax):
             dist_index = (rowaxi * num_rows) + colaxi
-            colax[dist_index].hist(reference_distances[:, dist_index], density=True, color="grey", alpha=0.75, bins="sqrt")
-            colax[dist_index].set_title(f"dist. b/w {distance_reference_points[dist_index][0]}-{distance_reference_points[dist_index][1]}")
-            colax[dist_index].grid(color="black", alpha=0.35, linestyle=":")
+            colax.hist(reference_distances[:, dist_index], density=True, color="grey", alpha=0.75, bins="sqrt")
+            colax.set_title(f"dist. b/w {distance_reference_points[dist_index][0]}-{distance_reference_points[dist_index][1]}")
+            colax.grid(color="black", alpha=0.35, linestyle=":")
 
     fig.supxlabel("distance (nm)")
     fig.supylabel("counts (density)")
