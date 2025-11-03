@@ -47,7 +47,7 @@ ax[0].set_xticklabels(codenames, rotation=25, fontsize=8)
 ax[0].set_yticks([0, 1])
 ax[0].set_yticklabels(["Correct\nmultimer", "incorrect\nmultimer"], rotation=30)
 ax[0].set_title("fraction time bound in some multimer", fontsize=10)
-cbar1 = fig.colorbar(im1, ax=ax[0], shrink=0.5)
+cbar1 = fig.colorbar(im1, ax=ax[0], shrink=0.75)
 cbar1.set_label("fraction of frames")
 
 # Second heatmap
@@ -57,7 +57,7 @@ ax[1].set_xticklabels(codenames, rotation=25, fontsize=8)
 ax[1].set_yticks([0, 1])
 ax[1].set_yticklabels(["correct ETE\ncoil 1", "correct ETE\ncoil 2"], rotation=30)
 ax[1].set_title("fraction time coils have correct ETE", fontsize=10)
-cbar2 = fig.colorbar(im2, ax=ax[1], shrink=0.5)
+cbar2 = fig.colorbar(im2, ax=ax[1], shrink=0.75)
 cbar2.set_label("fraction of frames")
 
 # Third heatmap
@@ -67,7 +67,7 @@ ax[2].set_xticklabels(codenames, rotation=25, fontsize=8)
 ax[2].set_yticks([0, 1, 2])
 ax[2].set_yticklabels(["correctly\nbound", "incorrectly\nbound", "correct+\nincorrect"], rotation=30)
 ax[2].set_title("fraction time bound X fraction correct ETE")
-cbar3 = fig.colorbar(im3, ax=ax[2], shrink=0.5)
+cbar3 = fig.colorbar(im3, ax=ax[2], shrink=0.75)
 cbar3.set_label("fraction of time\nsimulation behaves")
 
 # Save figure
