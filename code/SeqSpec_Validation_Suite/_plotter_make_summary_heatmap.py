@@ -37,8 +37,8 @@ for codei, code in enumerate(codenames):
 redesigned_array = np.reshape(np.concatenate(total_array), (len(codenames), 7)).T
 
 # Figure setup
-fig_width = (len(codenames) / 10) * 5
-fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(fig_width, 5))
+fig_width = (len(codenames) / 10) * 6
+fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(fig_width, 6))
 
 # First heatmap
 im1 = ax[0].imshow(redesigned_array[3:5, :], cmap="coolwarm", interpolation="none", origin="lower", vmin=0.0, vmax=1.0)
@@ -46,7 +46,7 @@ ax[0].set_xticks(np.arange(len(codenames)))
 ax[0].set_xticklabels(codenames, rotation=25, fontsize=8)
 ax[0].set_yticks([0, 1])
 ax[0].set_yticklabels(["Correct\nmultimer", "incorrect\nmultimer"], rotation=30)
-ax[0].set_title("are the coils correctly or incorrectly bound? (fraction time bound)", fontsize=10)
+ax[0].set_title("fraction time bound in some multimer", fontsize=10)
 cbar1 = fig.colorbar(im1, ax=ax[0])
 cbar1.set_label("fraction of frames")
 
@@ -56,7 +56,7 @@ ax[1].set_xticks(np.arange(len(codenames)))
 ax[1].set_xticklabels(codenames, rotation=25, fontsize=8)
 ax[1].set_yticks([0, 1])
 ax[1].set_yticklabels(["correct ETE\ncoil 1", "correct ETE\ncoil 2"], rotation=30)
-ax[1].set_title("do the coils have the right shape? (fraction time correct ETE)", fontsize=10)
+ax[1].set_title("fraction time coils have correct ETE", fontsize=10)
 cbar2 = fig.colorbar(im2, ax=ax[1])
 cbar2.set_label("fraction of frames")
 
