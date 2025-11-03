@@ -39,7 +39,8 @@ redesigned_array = np.reshape(np.concatenate(total_array), (len(codenames), 7)).
 # Figure setup
 figsize_scalar = len(codenames) / 5
 fig_width = math.ceil(5 * figsize_scalar)
-fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(fig_width, 6), constrained_layout=True)
+# fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(fig_width, 6), constrained_layout=True)
+fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(fig_width, 6))
 
 # First heatmap
 im1 = ax[0].imshow(redesigned_array[3:5, :], cmap="coolwarm", interpolation="none", origin="lower", vmin=0.0, vmax=1.0)
