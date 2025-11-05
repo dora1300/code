@@ -163,7 +163,7 @@ if __name__ == "__main__":
     parser.add_argument('-cutoff_for_wrong_multimerization', help="[default: 0.1.2] [nm] The distance between reference beads " \
                         "to classify a multimer that is wrongly aligned but still a multimer.",
                         type=float, default=1.2) 
-    parser.add_argument('-threshold_for_correct_multimerization', help="[default: 0.75] The fraction of reference beads that " \
+    parser.add_argument('-threshold_for_multimerization', help="[default: 0.75] The fraction of reference beads that " \
                         "need to be within the provided cut-offs for structure to be called a multimer. This can be for correct " \
                         "or in correct multimer arrangements.",
                         type=float, default=0.75)
