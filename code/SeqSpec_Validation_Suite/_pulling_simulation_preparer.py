@@ -532,7 +532,7 @@ if __name__ == "__main__":
                                                ENV_INFO[6],
                                                args.cutoff_for_correct_multimerization,
                                                args.cutoff_for_wrong_multimerization,
-                                               args.threshold_for_correct_multimerization)
+                                               args.threshold_for_multimerization)
     shutil.copyfile(f"plot_{args.protein_codename}_key_ref_distances_0.png",
                     f"../analysis_{args.protein_codename}/plot_{args.protein_codename}_key_ref_distances_0.png")
     shutil.copyfile(f"plot_{args.protein_codename}_areCoilsInMultimer.png",
