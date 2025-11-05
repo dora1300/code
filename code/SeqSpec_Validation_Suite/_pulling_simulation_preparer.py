@@ -154,6 +154,25 @@ if __name__ == "__main__":
                         type=float, default=2.0)
     
 
+    #
+    #   Arguments for changing different analysis parameters. You don't have to use this but can if you want
+    #
+    parser.add_argument('-cutoff_for_correct_multimerization', help="[default: 0.9] [nm] The distance between reference beads " \
+                        "to classify a correct multimer.",
+                        type=float, default=0.9) 
+    parser.add_argument('-cutoff_for_wrong_multimerization', help="[default: 0.1.2] [nm] The distance between reference beads " \
+                        "to classify a multimer that is wrongly aligned but still a multimer.",
+                        type=float, default=1.2) 
+    parser.add_argument('-threshold_for_correct_multimerization', help="[default: 0.75] The fraction of reference beads that " \
+                        "need to be within the provided cut-offs for structure to be called a multimer. This can be for correct " \
+                        "or in correct multimer arrangements.",
+                        type=float, default=0.75)
+
+    parser.add_argument('-ete_tolerance_threshold', help="[default: 0.8] The threshold at which a given coil's ETE relative to " \
+                        "starting frame can still be considered a tolerable ETE, " \
+                        "e.g. if ETE_frame <= (ETE_initial * ete_tolerance_threshold) then the coil does not have correct ETE.",
+                        type=float, default=0.8)
+
 
 
     """
@@ -510,7 +529,10 @@ if __name__ == "__main__":
 
     fracframe_correct_multimer, fracframes_wrong_multimer = analyzer.analyze_reference_point_distances(args.protein_codename,
                                                simtraj,
-                                               ENV_INFO[6])
+                                               ENV_INFO[6],
+                                               args.cutoff_for_correct_multimerization,
+                                               args.cutoff_for_wrong_multimerization,
+                                               args.threshold_for_correct_multimerization)
     shutil.copyfile(f"plot_{args.protein_codename}_key_ref_distances_0.png",
                     f"../analysis_{args.protein_codename}/plot_{args.protein_codename}_key_ref_distances_0.png")
     shutil.copyfile(f"plot_{args.protein_codename}_areCoilsInMultimer.png",
@@ -520,7 +542,8 @@ if __name__ == "__main__":
     
     coil1_frac_correct_ETE, coil2_frac_correct_ETE = analyzer.analyze_ETE_distances(args.protein_codename,
                                    simtraj,
-                                   ENV_INFO[3])
+                                   ENV_INFO[3],
+                                   args.ete_tolerance_threshold)
     shutil.copyfile(f"plot_{args.protein_codename}_ETE_fraction_frame.png",
                     f"../analysis_{args.protein_codename}/plot_{args.protein_codename}_ETE_fraction_frame.png")
     shutil.copyfile(f"{args.protein_codename}_ETEs_fraction_frame_correct.csv",

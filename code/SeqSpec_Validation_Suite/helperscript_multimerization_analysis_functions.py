@@ -171,11 +171,11 @@ def helper_are_all2all_distances_a_multimer(all2all_dists, cutoff, acceptable_fr
 
 
 def analyze_reference_point_distances(codename,
-                       traj, 
-                       distance_reference_points,
-                       core_cutoff:float=0.9,
-                       acceptable_threshold:float=0.75,
-                       mismatch_cutoff:float=1.2):
+                    traj, 
+                    distance_reference_points,
+                    core_cutoff:float=0.9,
+                    mismatch_cutoff:float=1.2,
+                    acceptable_threshold:float=0.75):
     """
     :args:
         individual_coil_lengths : (list)
