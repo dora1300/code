@@ -167,6 +167,10 @@ if __name__ == "__main__":
                         "need to be within the provided cut-offs for structure to be called a multimer. This can be for correct " \
                         "or in correct multimer arrangements.",
                         type=float, default=0.75)
+    parser.add_argument('-threshold_for_anycontact', help="[default: 0.5] The fraction of reference beads that " \
+                        "need to be within the provided cut-offs for structure to be classified as any type of contact. "\
+                        "This threshold will only be used if a given structure is already determined to not be 'correct'.",
+                        type=float, default=0.5)
 
     parser.add_argument('-ete_tolerance_threshold', help="[default: 0.8] The threshold at which a given coil's ETE relative to " \
                         "starting frame can still be considered a tolerable ETE, " \
@@ -532,7 +536,8 @@ if __name__ == "__main__":
                                                ENV_INFO[6],
                                                args.cutoff_for_correct_multimerization,
                                                args.cutoff_for_wrong_multimerization,
-                                               args.threshold_for_multimerization)
+                                               args.threshold_for_multimerization,
+                                               args.threshold_for_anycontact)
     shutil.copyfile(f"plot_{args.protein_codename}_key_ref_distances_0.png",
                     f"../analysis_{args.protein_codename}/plot_{args.protein_codename}_key_ref_distances_0.png")
     shutil.copyfile(f"plot_{args.protein_codename}_areCoilsInMultimer.png",

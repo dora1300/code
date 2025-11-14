@@ -10,6 +10,7 @@ codename : [["protein_names_that_go_into_.top", ...],
             [[n,term,torsion,indices,...]],
             [[c,term,torsion,indices,...]],
             [[distance,ref,indices,...]],
+            [heptad length for each coil,...],
             [comments about the structure, for posterity]
             ]
 """
@@ -25,7 +26,9 @@ validation_dictionary = {
               [21, 21],
               [[1, 8, 29, 22]],
               [[18, 11, 32, 39]],
-              [[1, 22], [8, 29], [11, 32], [18, 39]]
+              [[1, 22], [8, 29], [11, 32], [18, 39]],
+              [3, 3],
+              ["3 hetpad long designer coils from Ramsak et al."]
     ],
     
     "p5fp6f":[["p5f", "p6f"],
@@ -34,7 +37,9 @@ validation_dictionary = {
               [28, 28],
               [[1, 11, 39, 29]],
               [[25, 15, 43, 53]],
-              [[1, 29], [11, 39], [15, 43], [25, 53]]
+              [[1, 29], [11, 39], [15, 43], [25, 53]],
+              [4, 4],
+               ["4 hetpad long designer coils from Ramsak et al."]
 
     ],
 
@@ -44,7 +49,10 @@ validation_dictionary = {
                   [21, 21],
                   [[1, 8, 29, 22]],
                   [[18, 11, 32, 39]],
-                  [[1, 22], [8, 29], [11, 32], [18, 39]]
+                  [[1, 22], [8, 29], [11, 32], [18, 39]],
+                  [3, 3],
+                  ["3 hetpad long designer coils from Ramsak et al.",
+                    "parallel coils"]
     ],
 
     "aph2aph2":[["aph2"],
@@ -53,7 +61,10 @@ validation_dictionary = {
                 [21, 21],
                 [[1, 8, 32, 39]],
                 [[18, 11, 32, 22]],
-                [[1, 39], [8, 32], [11, 29], [18, 22]]
+                [[1, 39], [8, 32], [11, 29], [18, 22]],
+                [3, 3],
+                ["3 hetpad long designer coils from Ramsak et al.",
+                    "antiparallel coils"]
     ],
 
     "4dzm":[["4dzm"],
@@ -62,6 +73,7 @@ validation_dictionary = {
             [32, 32],
             [[2, 12, 44, 34]],
             [[26, 16, 48, 58]],
+            [4.5, 4.5],
             [[1, 34], [12, 44], [16, 48], [26, 58]]
     ],
 
@@ -71,6 +83,7 @@ validation_dictionary = {
             [30, 30], 
             [[2, 13, 46, 57]],
             [[27, 16, 43, 32]],
+            [4, 4],
             [[2, 57], [13, 46], [16, 43], [27, 32]]
     ],
 
@@ -81,7 +94,8 @@ validation_dictionary = {
               [[2, 12, 34, 44], [2, 12, 66, 76]],
               [[26, 16, 48, 58], [26, 16, 80, 90]],
               [[2, 34], [12, 44], [16, 48], [26, 58],
-               [2, 66], [12, 76], [16, 80], [26, 90]]
+               [2, 66], [12, 76], [16, 80], [26, 90]],
+               [4.5, 4.5, 4.5]
     ],
 
     "gcn4-2" : [["gcn4-2"],
@@ -91,6 +105,7 @@ validation_dictionary = {
               [[1, 11, 42, 32]],
               [[25, 18, 49, 56]],
               [[1, 32], [8, 39], [11, 42], [15, 46], [18, 49], [25, 56]],
+              [4, 4],
               ["This comes from PDB code 1ysa. This does not exist in the CC+ database for reasons I don't understand because GCN4 is considered a canonical coiled-coil (leucine zipper).",
                "delete the final ER from the sequence in 4dmd. The sequence will only be 31 amino acids"]
 
@@ -105,8 +120,9 @@ validation_dictionary = {
               [[0,47], [4,51], [7,54], [11,58], [14,61], [18,65], 
                [21,68], [25,72], [28,75], [32,79], [35,82], 
                [39,86], [42,89], [46,93]],
+               [6.7, 6.7],
               ["from the CC+ database, a longerish coil",
-               "parallel orientation"]
+               "parallel orientation. Csm1 from S. Cerevisiae"]
 
     ],
 

@@ -175,7 +175,8 @@ def analyze_reference_point_distances(codename,
                     distance_reference_points,
                     core_cutoff:float=0.9,
                     mismatch_cutoff:float=1.2,
-                    acceptable_threshold:float=0.75):
+                    acceptable_threshold:float=0.75,
+                    acceptable_threshold_anycontact:float=0.5):
     """
     :args:
         individual_coil_lengths : (list)
@@ -229,7 +230,7 @@ def analyze_reference_point_distances(codename,
             #   PLEASE REMEMBER!!
             #   Using the above method -- I need to take the transpose before I do any analysis!!
             # this checks to see if any of the coils are making a contact that could construed as a multimer.
-            if helper_are_all2all_distances_a_multimer(coil1_to_coil2_ref_point_dists.T, mismatch_cutoff, acceptable_threshold):
+            if helper_are_all2all_distances_a_multimer(coil1_to_coil2_ref_point_dists.T, mismatch_cutoff, acceptable_threshold_anycontact):
                 multimer_analysis_table[frame_i, 1] = 1
             else:
                 multimer_analysis_table[frame_i, 2] = 1
