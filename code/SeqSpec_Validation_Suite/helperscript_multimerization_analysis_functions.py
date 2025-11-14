@@ -227,7 +227,7 @@ def analyze_reference_point_distances(codename,
             frame_coil1_ref_points = traj.xyz[frame_i, 
                                               np.arange(0, coil_lengths[0], 1), :]
             frame_coil2_ref_points = traj.xyz[frame_i, 
-                                              np.arange(coil_lengths[0], (coil_lengths[0]+coil_lengths[0]), 1), :]
+                                              np.arange(coil_lengths[0], (coil_lengths[0]+coil_lengths[1]), 1), :]
 
             # this calculates the distances of all points to each other using the vectorized method
             coil1_to_coil2_ref_point_dists = np.linalg.norm(frame_coil1_ref_points - frame_coil2_ref_points[:, None], axis=-1).T
