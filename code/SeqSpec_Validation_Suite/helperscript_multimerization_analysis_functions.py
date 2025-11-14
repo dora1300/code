@@ -156,14 +156,14 @@ def helper_are_distances_a_real_multimer(dist_arr, cutoff, acceptable_frac_dists
 
 def helper_are_all2all_distances_a_multimer(all2all_dists, cutoff, acceptable_frac_dists):
     beads_that_are_making_contacts = 0
-    beads_not_making_contacts = 0
+    # beads_not_making_contacts = 0
     for beadi_distances in all2all_dists:
         if ((beadi_distances <= cutoff)).any():
             beads_that_are_making_contacts += 1
-        else:
-            beads_not_making_contacts += 1
+        # else:
+        #     beads_not_making_contacts += 1
     
-    if (beads_that_are_making_contacts / (beads_that_are_making_contacts + beads_not_making_contacts)) >= acceptable_frac_dists:
+    if (beads_that_are_making_contacts / (len(all2all_dists))) >= acceptable_frac_dists:
         return True
     else:
         return False
@@ -228,13 +228,15 @@ def analyze_reference_point_distances(codename,
                                               np.arange(0, coil_lengths[0], 1), :]
             frame_coil2_ref_points = traj.xyz[frame_i, 
                                               np.arange(coil_lengths[0], (coil_lengths[0]+coil_lengths[1]), 1), :]
-
+            
             # this calculates the distances of all points to each other using the vectorized method
             coil1_to_coil2_ref_point_dists = np.linalg.norm(frame_coil1_ref_points - frame_coil2_ref_points[:, None], axis=-1).T
             #   STOP!!
             #   PLEASE REMEMBER!!
             #   Using the above method -- I need to take the transpose before I do any analysis!!
             # this checks to see if any of the coils are making a contact that could construed as a multimer.
+            # np.savetxt("distance_file.csv", coil1_to_coil2_ref_point_dists, delimiter=",", fmt="%4f")
+            
             if helper_are_all2all_distances_a_multimer(coil1_to_coil2_ref_point_dists.T, mismatch_cutoff, acceptable_threshold_anycontact):
                 multimer_analysis_table[frame_i, 1] = 1
             else:
