@@ -534,6 +534,7 @@ if __name__ == "__main__":
     fracframe_correct_multimer, fracframes_wrong_multimer = analyzer.analyze_reference_point_distances(args.protein_codename,
                                                simtraj,
                                                ENV_INFO[6],
+                                               ENV_INFO[3],
                                                args.cutoff_for_correct_multimerization,
                                                args.cutoff_for_wrong_multimerization,
                                                args.threshold_for_multimerization,

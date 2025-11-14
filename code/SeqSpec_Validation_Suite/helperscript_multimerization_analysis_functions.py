@@ -173,6 +173,7 @@ def helper_are_all2all_distances_a_multimer(all2all_dists, cutoff, acceptable_fr
 def analyze_reference_point_distances(codename,
                     traj, 
                     distance_reference_points,
+                    coil_lengths,
                     core_cutoff:float=0.9,
                     mismatch_cutoff:float=1.2,
                     acceptable_threshold:float=0.75,
@@ -221,8 +222,12 @@ def analyze_reference_point_distances(codename,
             # type happening
             # This step gets the xyz coordinates for the reference points, which is important for getting the distances
             # in a vectorized way
-            frame_coil1_ref_points = traj.xyz[frame_i, ref_points_by_coil[0], :]
-            frame_coil2_ref_points = traj.xyz[frame_i, ref_points_by_coil[1], :]
+            # update 2025 11 14 -- assessing if there is any type of multimer is now handled differently. This is handled
+            # as a true all-2-all, and ignoring the reference points.
+            frame_coil1_ref_points = traj.xyz[frame_i, 
+                                              np.arange(0, coil_lengths[0], 1), :]
+            frame_coil2_ref_points = traj.xyz[frame_i, 
+                                              np.arange(coil_lengths[0], (coil_lengths[0]+coil_lengths[0]), 1), :]
 
             # this calculates the distances of all points to each other using the vectorized method
             coil1_to_coil2_ref_point_dists = np.linalg.norm(frame_coil1_ref_points - frame_coil2_ref_points[:, None], axis=-1).T
