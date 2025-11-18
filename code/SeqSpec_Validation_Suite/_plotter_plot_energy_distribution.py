@@ -36,7 +36,7 @@ CODENAME = args.protein_codename
 OUTPUTNAME = args.output_name
 
 # I will need the total number of beads!
-protein_dictionary = mult_dict[CODENAME]
+protein_dictionary = mult_dict.validation_dictionary[CODENAME]
 total_system_beads = np.sum(np.array(protein_dictionary[3]))
 
 
