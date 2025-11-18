@@ -31,7 +31,7 @@ parser.add_argument("-output_name", help="A name to add to the final plot.", typ
 
 
 args = parser.parse_args()
-ENERGYFILE = args.energyfile
+ENERGYFILE = args.energy_file
 CODENAME = args.protein_codename
 OUTPUTNAME = args.output_name
 
