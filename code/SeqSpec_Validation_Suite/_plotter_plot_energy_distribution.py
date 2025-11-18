@@ -60,5 +60,7 @@ axs[1].set_ylabel("density (counts)")
 axs[1].set_title("avg LJ energy per individual bead", fontstyle="italic")
 axs[1].legend()
 
+fig.suptitle(f"energy distribution for: {CODENAME}")
+
 plt.tight_layout()
 plt.savefig(f"{OUTPUTNAME}.png", dpi=300)
