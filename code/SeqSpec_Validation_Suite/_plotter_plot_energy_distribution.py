@@ -47,7 +47,7 @@ total_lj_energy = energy_file[:, 1].flatten()
 avg_total_lj_energy_by_bead = total_lj_energy / total_system_beads
 
 
-fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(5, 4))
+fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(5, 5))
 axs[0].hist(total_lj_energy, density=True, bins="sqrt", color="goldenrod", alpha=0.5)
 axs[0].set_title(f"total LJ energy", fontstyle="italic")
 axs[0].set_ylabel("density (counts)")
