@@ -378,7 +378,7 @@ if __name__ == "__main__":
                 f"-ntomp {args.nt} -s em_{args.protein_codename}.tpr -deffnm {args.protein_codename}_em"
         else:
             em_md_text = f"gmx mdrun " \
-                f"-nt {args.nt} -s em_{args.protein_codename}.tpr -deffnm {args.protein_codename}_em"
+                f"-nt {args.nt} -pin on -s em_{args.protein_codename}.tpr -deffnm {args.protein_codename}_em"
         em_md_cmd = em_md_text.split()
         em_md_process = subprocess.Popen(em_md_cmd)
         em_md_process.wait()
@@ -410,7 +410,7 @@ if __name__ == "__main__":
                 f"-s md_{args.protein_codename}.tpr -deffnm {args.protein_codename}_md"
         else:
             md_md_text = f"gmx mdrun " \
-                f"-nt {args.nt} -rdd 1.6 " \
+                f"-nt {args.nt} -pin on -rdd 1.6 " \
                 f"-s md_{args.protein_codename}.tpr -deffnm {args.protein_codename}_md"  
         md_md_cmd = md_md_text.split()
         md_md_process = subprocess.Popen(md_md_cmd)
