@@ -327,7 +327,7 @@ if __name__ == "__main__":
                                 "given in the backbone file. Please check your files and try again.")
             write_prot_itp.write_itp_text(input_protein_name, input_protein_sequence, 
                                         protein_name, input_protein_backbones, 
-                                        f"itp_{protein_name}.itp", args.nrexcl)
+                                        f"itp_{protein_name}.itp", args.nrexcl, args.use_og_pair_terms)
             list_of_itp_files.append(f"itp_{protein_name}.itp")
 
 
