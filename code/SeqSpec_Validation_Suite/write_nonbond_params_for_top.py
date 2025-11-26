@@ -75,7 +75,7 @@ def write_nonbonded_itp(epsilon_file_name, sigma_table, scaling_factor, scaling_
     else:
         # Now the magic happens. It's file to make the file contents
         nonbond_params_text = f"""[ nonbond_params ] 
-        ;i    j     func    V(sigma)   W(epsilon)\n"""
+;i    j     func    V(sigma)   W(epsilon)\n"""
 
         for I in range(len(aas_list)):
             for J in range(I, len(aas_list)):

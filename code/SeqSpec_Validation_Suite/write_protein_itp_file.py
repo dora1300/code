@@ -162,7 +162,9 @@ def write_itp_text(protein_name,
                    protein_sequence,
                    molecule_name,
                    backbone_scalars,
-                   itp_filename):
+                   itp_filename,
+                   nrexcl_val,
+                   generate_og_pairs):
     """
     Description:
     Arguments:
@@ -196,7 +198,7 @@ def write_itp_text(protein_name,
     
 [ moleculetype ]
 ;name          nrexcl
-{molecule_name}     4
+{molecule_name}     {nrexcl_val}
 """
 
     atoms_text = helper.generate_atom_text(protein_sequence, 
@@ -210,26 +212,34 @@ def write_itp_text(protein_name,
                                            BOND_FORCE)
 
 
-    pairs_text = f"""
+    if generate_og_pairs:
+        pairs_text = f"""
 
 [ pairs ]
+;OG 1-4 & 1-5 pairs from the CC-LLPS simulation framework
 ;i    j    func    C6(attrac)    C12(repul)
 """
-    pairs_14_text = helper.generate_pairs_text(seq_length,
-                                               "4",
-                                               backbone_scalars,
-                                               COIL_P14_C6,
-                                               COIL_P14_C12,
-                                               combining_method="mean")
-    pairs_15_text = helper.generate_pairs_text(seq_length,
-                                               "5",
-                                               backbone_scalars,
-                                               COIL_P15_C6,
-                                               COIL_P15_C12,
-                                               combining_method="mean")
-    pairs_text += pairs_14_text
-    pairs_text += pairs_15_text
+        pairs_14_text = helper.generate_pairs_text(seq_length,
+                                                "4",
+                                                backbone_scalars,
+                                                COIL_P14_C6,
+                                                COIL_P14_C12,
+                                                combining_method="mean")
+        pairs_15_text = helper.generate_pairs_text(seq_length,
+                                                "5",
+                                                backbone_scalars,
+                                                COIL_P15_C6,
+                                                COIL_P15_C12,
+                                                combining_method="mean")
+        pairs_text += pairs_14_text
+        pairs_text += pairs_15_text
 
+    else:
+        pairs_text = f"""
+
+[ pairs ]
+;no pairs provided because OG pair generation was turned off
+"""
 
     exclusions_text = f"""
 

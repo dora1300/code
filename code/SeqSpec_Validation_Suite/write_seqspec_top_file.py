@@ -30,7 +30,9 @@ def write_text_top(atomtypes_name,
                    moleculetype_name:list, 
                    molecule_number:list,
                    system_name,
-                   output_name):
+                   output_name,
+                   genpairs_val,
+                   fudgelj_val):
     text = f""";
 ;           TOPOLOGY FILE
 ; This is a topology file for a sequence specific simulation
@@ -39,7 +41,7 @@ def write_text_top(atomtypes_name,
 
 [ defaults ]
 ;nbfunc     comb-rule      gen-pairs        fudgeLJ     fudgeQQ
-1           2              yes              1.0         0.0
+1           2              {genpairs_val}              {fudgelj_val}         0.0
 
 ; this is where [ atomtypes ] directive would live, but is incorporated 
 ; through an include statement

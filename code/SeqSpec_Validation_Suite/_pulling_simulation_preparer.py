@@ -75,9 +75,26 @@ if __name__ == "__main__":
     
     parser.add_argument("-system_name", help="[default: 'coiled-coil-system'] The GROMACS system name that goes "
                         "into the topology file. Can use default.", default="coiled-coil-system", type=str)
+    
+    parser.add_argument("-nt", help="[default: 1] The number of threads to assign to running the simulation.", 
+                        default=1, type=str)
+    
 
     #
-    #   Specific arguments for specifying nonbonded information
+    #   Specific arguments for the protein.itp file!
+    #
+    parser.add_argument("-nrexcl", help="[default: 3] The value to set for the `nrexcl` component of the protein.itp file. " \
+                        "This is relevant for determining pairs and excluded nonbonded interactions.",
+                        type=str, default="3")
+
+    parser.add_argument("-use_og_pair_terms", help="[T/F] [default: False] switch. Activate this switch (!) to use the 1-4 AND "\
+                        "1-5 pair terms that come from my OG CC-LLPS simulation framework. The OG pairs were used to help stabilize "\
+                        "the backbone helix but can be removed as desired. This will of course overwrite nonbonded interactions "\
+                        "for 1-4 and 1-5 regardless of what nrexcl is set to. **These pairs were developed with nrexcl=4 just FYI**",
+                        action="store_true", default=False)
+
+    #
+    #   Specific arguments for specifying nonbonded information for nonbonded.itp
     #
     parser.add_argument("-name_of_nonbonded_file", help="[default: itp_nonbonded.itp] The name that you'd like to give to the nonbonded_params.itp. "
                         "Please include the extension and the path if appropriate!",
@@ -86,35 +103,20 @@ if __name__ == "__main__":
     parser.add_argument("-epsilon_matrix_file", help="[csv] the 20x20 matrix/CSV file containing the "
                         "epsilons for the itp file. PLEASE GIVE THE ABSOLUTE PATH")
     
-    # parser.add_argument("-sigma_by_matrix", help="Switch. Are you using a matrix of pre-calculated sigmas?",
-    #                     default=False, action="store_true")
-    
     parser.add_argument("-sigma_matrix_file", help="[csv] Name (and path) of the file containing the 20x20 "
                         "matrix of sigma values to use. PLEASE GIVE THE ABSOLUTE PATH")
-    
-    # parser.add_argument("-sigma_by_aa", help="Switch. Are you providing a list of sigma values but only for "
-    #                     "each individual amino acids?",
-    #                     default=False, action="store_true")
-    
-    # parser.add_argument("-sigma_aa_name", help="[csv] Name of the file which contains the sigma values for "
-    #                     "each individual amino acid. Make sure each sigma gets its own line AND that the "
-    #                     "sigmas are in alphabetical order corresponding to their amino acids! No labels please!")
-    
-    # parser.add_argument("-sigma_by_dignon", help="Switch. Do you want to generate sigmas based on the values "
-    #                     "used by Dignon et al. 2018 PLOS One?",
-    #                     default=False, action="store_true")
     
     parser.add_argument("-combining_rule", help="[default: 'lorentz']The code-name of the combining rule to use for calculating "
                         "sigmas. Only 'lorentz' is supported right now.",
                         default="lorentz")
     
-    parser.add_argument("-epsilon_scale_factor", help="[default: 1.0] A factor by which to scale the epsilons provided in the "
+    parser.add_argument("-epsilon_scale_factor", help="[default: 1.0] A global factor by which to scale the epsilons provided in the "
                         "epsilon matrix. Each epsilon is scaled multiplicatively by the scale factor, so please "
                         "provide fractional scale factors. e.g. 1 = no change, 0.90 = 90%% of regular "
                         "epsilons, 1.25 means 25%% stronger than reference epsilons etc.", default=1.0,
                         type=float)
     
-    parser.add_argument("-sigma_scale_factor", help="[default: 1.0] A factor by which to scale the sigmas provided in the "
+    parser.add_argument("-sigma_scale_factor", help="[default: 1.0] A global factor by which to scale the sigmas provided in the "
                         "sigma matrix. Each sigma is scaled multiplicatively by the scale factor, so please "
                         "provide fractional scale factors. e.g. 1 = no change, 0.90 = 90%% of regular "
                         "sigmas, 1.25 means 25%% stronger than provided sigmas etc.", default=1.0,
@@ -136,12 +138,27 @@ if __name__ == "__main__":
                         "file. This is mostly useless but must be provided in the topology.",
                         default=5.97404E-05, type=float)
     
+
+    #  
+    #   Specific arguments for specifying the atomtypes.itp information
+    #
+    # parser.add_argument("")
+
+
     #  
     #  Specific arguments for specifying the total.top information
     #        
     parser.add_argument('-name_of_topology_file', help="[default: top_cc.top] Name that you want for the "
                         "overall topology (.top) file.", 
                         type=str, default="top_cc.top")
+    
+    parser.add_argument("-genpairs", help="[default: 'yes'] The value to pass to the `gen-pairs` component of the .top file. " \
+                        "Be mindful of how you use this if you choose to provide additional pairtypes.itp files.",
+                        default="yes", type=str)
+    
+    parser.add_argument("-fudgelj", help="[default: 1.0] The numeric value to pass to `fudgeLJ` term in the general .top "\
+                        "file. This will be used to scale generated 1-4 pairs when `gen-pairs`='yes'",
+                        default=1.0, type=float)
     
 
     #
@@ -310,7 +327,7 @@ if __name__ == "__main__":
                                 "given in the backbone file. Please check your files and try again.")
             write_prot_itp.write_itp_text(input_protein_name, input_protein_sequence, 
                                         protein_name, input_protein_backbones, 
-                                        f"itp_{protein_name}.itp")
+                                        f"itp_{protein_name}.itp", args.nrexcl)
             list_of_itp_files.append(f"itp_{protein_name}.itp")
 
 
@@ -318,10 +335,10 @@ if __name__ == "__main__":
         #    Generate the protein .top file.
         #       This is where sequence specificity happens i.e. where I incorporate my epsilon and sigma parameters!
         #
-        #     write_text_top(ATOMTYPE_NAME, NONBONDED_NAME, ITP_NAME, MOLECULETYPE_NAME, NUM_MOLTYPE, SYS_NAME, OUTPUT)
+        #     write_text_top(ATOMTYPE_NAME, NONBONDED_NAME, ITP_NAME, MOLECULETYPE_NAME, NUM_MOLTYPE, SYS_NAME, OUTPUT, GENPAIRS, FUDGELJ)
         write_top.write_text_top(args.name_of_atomtypes_file, args.name_of_nonbonded_file ,
                                 list_of_itp_files, list_of_protein_names, list_of_ncoils,
-                                args.system_name, args.name_of_topology_file)
+                                args.system_name, args.name_of_topology_file, args.genpairs, args.fudgelj)
 
 
 
@@ -358,10 +375,10 @@ if __name__ == "__main__":
 
         if args.run_on_alpine:
             em_md_text = f"mpirun -np 1 --mca opal_common_ucx_opal_mem_hooks 1 gmx_mpi mdrun " \
-                f"-ntomp 1 -s em_{args.protein_codename}.tpr -deffnm {args.protein_codename}_em"
+                f"-ntomp {args.nt} -s em_{args.protein_codename}.tpr -deffnm {args.protein_codename}_em"
         else:
             em_md_text = f"gmx mdrun " \
-                f"-ntomp 1 -s em_{args.protein_codename}.tpr -deffnm {args.protein_codename}_em"
+                f"-nt {args.nt} -s em_{args.protein_codename}.tpr -deffnm {args.protein_codename}_em"
         em_md_cmd = em_md_text.split()
         em_md_process = subprocess.Popen(em_md_cmd)
         em_md_process.wait()
@@ -389,11 +406,11 @@ if __name__ == "__main__":
 
         if args.run_on_alpine:
             md_md_text = f"mpirun -np 1 --mca opal_common_ucx_opal_mem_hooks 1 gmx_mpi mdrun " \
-                f"-ntomp 1 -rdd 1.6 " \
+                f"-ntomp {args.nt} -rdd 1.6 " \
                 f"-s md_{args.protein_codename}.tpr -deffnm {args.protein_codename}_md"
         else:
             md_md_text = f"gmx mdrun " \
-                f"-ntomp 1 -rdd 1.6 " \
+                f"-nt {args.nt} -rdd 1.6 " \
                 f"-s md_{args.protein_codename}.tpr -deffnm {args.protein_codename}_md"  
         md_md_cmd = md_md_text.split()
         md_md_process = subprocess.Popen(md_md_cmd)
