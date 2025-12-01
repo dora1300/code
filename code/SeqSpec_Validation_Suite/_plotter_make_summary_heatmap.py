@@ -12,6 +12,7 @@ and analysis of a set of validation simulations.
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
+import helperscript_level1_multimerization_dictionary as multdict
 import math
 
 parser = argparse.ArgumentParser(description="A tool to make a summary heatmap for a completed set of validation simulations")

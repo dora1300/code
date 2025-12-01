@@ -32,7 +32,11 @@ def write_text_top(atomtypes_name,
                    system_name,
                    output_name,
                    genpairs_val,
-                   fudgelj_val):
+                   fudgelj_val,
+                   include_pairtypes=False,
+                   pairtypes_name=None):
+    
+#  Starting text for basically the preamble of the topology file
     text = f""";
 ;           TOPOLOGY FILE
 ; This is a topology file for a sequence specific simulation
@@ -47,6 +51,24 @@ def write_text_top(atomtypes_name,
 ; through an include statement
 #include "{atomtypes_name}"
 
+"""
+    
+
+    if include_pairtypes:
+#  Handle the inclusion of pairtypes, if I have them.
+        text += f"""
+; this is where [ pairtypes ] directive would live, but is incorporated 
+; through an include statement
+#include "{pairtypes_name}"
+
+"""
+    else:
+        # this is entirely unnecessary other than being explicit about my logic flow
+        pass
+
+
+#  Now resume the rest of the topology handling
+    text += f"""
 ; this is where the [ nonbond_params ] would live, and it is also
 ; incorporated with an include statement
 #include "{nonbonded_name}"

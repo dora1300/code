@@ -20,6 +20,7 @@ import subprocess
 import helperscript_level1_multimerization_dictionary as mult_dict
 import write_protein_itp_file as write_prot_itp
 import write_nonbond_params_for_top as write_nonbonded
+import write_pairtypes_for_top as write_pairtypes
 import write_atomtypes_for_top as write_atomtypes
 import write_seqspec_top_file as write_top
 import importonly_write_com_pulling_mdp_files as mdp_writer
@@ -140,9 +141,24 @@ if __name__ == "__main__":
     
 
     #  
-    #   Specific arguments for specifying the atomtypes.itp information
+    #   Specific arguments for specifying the pairtypes.itp information
     #
-    # parser.add_argument("")
+    parser.add_argument("-include_pairtypes_file", help="[T/F] [default: False] switch. Toggle this if you want to include a separate "\
+                        "pairtypes.itp file in the topology.",
+                        action="store_true", default=False)
+    
+    parser.add_argument("-name_of_pairtypes_file", help="[default: itp_pairtypes.itp] The name that you'd like to "
+                        "give to the pairtypes.itp file! "
+                        "Please include the extension and the path if appropriate!",
+                        default="itp_pairtypes.itp")
+    
+    parser.add_argument("-epsilon_14_scale_factor", help="[default: 1.0] A factor by which to multiplicatively scale the epsilons "\
+                        "used in the pairtypes.itp file, which will affect ONLY the 1-4 pairs if gen-pairs = yes", default=1.0,
+                        type=float)
+    
+    parser.add_argument("-sigma_14_scale_factor", help="[default: 1.0] A factor by which to multiplicatively scale the sigmas "\
+                        "used in the pairtypes.itp file, which will affect ONLY the 1-4 pairs if gen-pairs = yes", default=1.0,
+                        type=float)
 
 
     #  
@@ -294,12 +310,32 @@ if __name__ == "__main__":
                                                 False, None,
                                                 False, args.combining_rule)
         
-        # Step 2 -- generate the text that will make up the file contents
+        # Step 2 -- generate the text that will make up the file contents of itp_nonbonded
         nonbond_file_contents = write_nonbonded.write_nonbonded_itp(args.epsilon_matrix_file, array_of_sigmas, 
                                                 args.epsilon_scale_factor, args.sigma_scale_factor)
 
         # Step 3 -- save the itp file to disk!
         write_nonbonded.save_itp_file_to_disk(nonbond_file_contents, args.name_of_nonbonded_file)
+
+
+
+        #
+        #   Generate itp_paritypes.itp
+        #   this is the sequence specific parameters used for handling 1-4 pairs!!
+        #
+        #   But only do this if I pass the argument specifying to do this.
+        #
+        if args.include_pairtypes_file:
+            array_of_pairtype_sigmas = write_pairtypes.load_calculated_sigmas(True, args.sigma_matrix_file,
+                                                    False, None,
+                                                    False, args.combining_rule)
+            
+            pairtype_file_contents = write_pairtypes.write_pairtypes_itp(args.epsilon_matrix_file, array_of_pairtype_sigmas, 
+                                                    args.epsilon_14_scale_factor, args.sigma_14_scale_factor)
+
+            # Step 3 -- save the itp file to disk!
+            write_pairtypes.save_itp_file_to_disk(nonbond_file_contents, args.name_of_pairtypes_file)
+
 
 
         #
@@ -338,7 +374,9 @@ if __name__ == "__main__":
         #     write_text_top(ATOMTYPE_NAME, NONBONDED_NAME, ITP_NAME, MOLECULETYPE_NAME, NUM_MOLTYPE, SYS_NAME, OUTPUT, GENPAIRS, FUDGELJ)
         write_top.write_text_top(args.name_of_atomtypes_file, args.name_of_nonbonded_file ,
                                 list_of_itp_files, list_of_protein_names, list_of_ncoils,
-                                args.system_name, args.name_of_topology_file, args.genpairs, args.fudgelj)
+                                args.system_name, args.name_of_topology_file, args.genpairs, args.fudgelj,
+                                include_pairtypes=args.include_pairtypes_file, 
+                                pairtypes_name=args.args.name_of_pairtypes_file)
 
 
 
