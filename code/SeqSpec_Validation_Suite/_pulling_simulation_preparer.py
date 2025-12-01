@@ -334,7 +334,7 @@ if __name__ == "__main__":
                                                     args.epsilon_14_scale_factor, args.sigma_14_scale_factor)
 
             # Step 3 -- save the itp file to disk!
-            write_pairtypes.save_itp_file_to_disk(nonbond_file_contents, args.name_of_pairtypes_file)
+            write_pairtypes.save_itp_file_to_disk(pairtype_file_contents, args.name_of_pairtypes_file)
 
 
 
