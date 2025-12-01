@@ -376,7 +376,7 @@ if __name__ == "__main__":
                                 list_of_itp_files, list_of_protein_names, list_of_ncoils,
                                 args.system_name, args.name_of_topology_file, args.genpairs, args.fudgelj,
                                 include_pairtypes=args.include_pairtypes_file, 
-                                pairtypes_name=args.args.name_of_pairtypes_file)
+                                pairtypes_name=args.name_of_pairtypes_file)
 
 
 
