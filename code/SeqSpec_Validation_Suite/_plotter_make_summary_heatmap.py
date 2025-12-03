@@ -39,7 +39,7 @@ for codei, code in enumerate(codenames):
 codename_label_colors = []
 for label in codenames:
     try:
-        if multdict.validation_dictionary[label][8] == "positive":
+        if multdict.validation_dictionary[label][0][8] == "positive":
             codename_label_colors.append("goldenrod")
         else:
             codename_label_colors.append("grey")
