@@ -34,6 +34,18 @@ total_array = np.empty(len(codenames), dtype=object)
 for codei, code in enumerate(codenames):
     total_array[codei] = np.loadtxt(f"{ANPATH}/analysis_{code}/heatmap_{code}_correct_and_total_multimer.csv")
 
+
+# Get label colors for each of codenames to distinguish positive vs negative controls
+codename_labels = []
+for label in codenames:
+    try:
+        if multdict.validation_dictionary[label][8] == "positive":
+            codename_labels.append("goldenrod")
+        else:
+            codename_labels.append("grey")
+    except:
+        codename_labels.append("grey")
+
 # Reshape combined data
 redesigned_array = np.reshape(np.concatenate(total_array), (len(codenames), 7)).T
 
