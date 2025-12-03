@@ -36,15 +36,15 @@ for codei, code in enumerate(codenames):
 
 
 # Get label colors for each of codenames to distinguish positive vs negative controls
-codename_labels = []
+codename_label_colors = []
 for label in codenames:
     try:
         if multdict.validation_dictionary[label][8] == "positive":
-            codename_labels.append("goldenrod")
+            codename_label_colors.append("goldenrod")
         else:
-            codename_labels.append("grey")
+            codename_label_colors.append("grey")
     except:
-        codename_labels.append("grey")
+        codename_label_colors.append("grey")
 
 # Reshape combined data
 redesigned_array = np.reshape(np.concatenate(total_array), (len(codenames), 7)).T
@@ -53,10 +53,13 @@ redesigned_array = np.reshape(np.concatenate(total_array), (len(codenames), 7)).
 fig_width = (len(codenames) / 10) * 7
 fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(fig_width, 6))
 
+
 # First heatmap
 im1 = ax[0].imshow(redesigned_array[3:5, :], cmap="coolwarm", interpolation="none", origin="lower", vmin=0.0, vmax=1.0)
 ax[0].set_xticks(np.arange(len(codenames)))
 ax[0].set_xticklabels(codenames, rotation=25, fontsize=8)
+for i, xtick_label in enumerate(ax[0].get_xticklabels()):
+    xtick_label.set_color(codename_label_colors[i])
 ax[0].set_yticks([0, 1])
 ax[0].set_yticklabels(["Correct\nmultimer", "incorrect\nmultimer"], rotation=30)
 ax[0].set_title("fraction time bound in some multimer", fontsize=10)
@@ -67,6 +70,8 @@ cbar1.set_label("fraction of frames")
 im2 = ax[1].imshow(redesigned_array[5:7, :], cmap="coolwarm", interpolation="none", origin="lower", vmin=0.0, vmax=1.0)
 ax[1].set_xticks(np.arange(len(codenames)))
 ax[1].set_xticklabels(codenames, rotation=25, fontsize=8)
+for i, xtick_label in enumerate(ax[1].get_xticklabels()):
+    xtick_label.set_color(codename_label_colors[i])
 ax[1].set_yticks([0, 1])
 ax[1].set_yticklabels(["correct ETE\ncoil 1", "correct ETE\ncoil 2"], rotation=30)
 ax[1].set_title("fraction time coils have correct ETE", fontsize=10)
@@ -77,6 +82,8 @@ cbar2.set_label("fraction of frames")
 im3 = ax[2].imshow(redesigned_array[0:3, :], cmap="coolwarm", interpolation="none", origin="lower", vmin=0.0, vmax=1.0)
 ax[2].set_xticks(np.arange(len(codenames)))
 ax[2].set_xticklabels(codenames, rotation=25, fontsize=8)
+for i, xtick_label in enumerate(ax[2].get_xticklabels()):
+    xtick_label.set_color(codename_label_colors[i])
 ax[2].set_yticks([0, 1, 2])
 ax[2].set_yticklabels(["correctly\nbound", "incorrectly\nbound", "correct+\nincorrect"], rotation=30)
 ax[2].set_title("fraction time bound X fraction correct ETE")

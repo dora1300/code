@@ -469,7 +469,7 @@ if __name__ == "__main__":
                 f"-s md_{args.protein_codename}.tpr -pbc whole -center -o final_frame.pdb " \
                 f"-b 500000 -e 500000 -n ../starting_structure/index_{args.protein_codename}.ndx"
             
-            beg_frame_txt = f"mpirun -np 1 gmx_mpi trjconv -f {args.protein_codename}_md.xtc " \
+            start_frame_txt = f"mpirun -np 1 gmx_mpi trjconv -f {args.protein_codename}_md.xtc " \
                 f"-s md_{args.protein_codename}.tpr -pbc whole -center -o starting_frame.pdb " \
                 f"-b 0 -e 0 -n ../starting_structure/index_{args.protein_codename}.ndx"
         else:
