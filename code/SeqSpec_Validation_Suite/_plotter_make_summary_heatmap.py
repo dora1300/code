@@ -44,7 +44,7 @@ for label in codenames:
         else:
             codename_label_colors.append("grey")
     except:
-        codename_label_colors.append("grey")
+        codename_label_colors.append("black")
 
 # Reshape combined data
 redesigned_array = np.reshape(np.concatenate(total_array), (len(codenames), 7)).T
