@@ -114,7 +114,7 @@ validation_dictionary = {
               [[25, 18, 49, 56]],
               [[1, 32], [8, 39], [11, 42], [15, 46], [18, 49], [25, 56]],
               [4, 4],
-              ["postiive"],
+              ["positive"],
               ["This comes from PDB code 1ysa. This does not exist in the CC+ database for reasons I don't understand because GCN4 is considered a canonical coiled-coil (leucine zipper).",
                "delete the final ER from the sequence in 4dmd. The sequence will only be 31 amino acids"]
 

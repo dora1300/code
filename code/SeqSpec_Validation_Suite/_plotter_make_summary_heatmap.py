@@ -79,13 +79,13 @@ cbar2 = fig.colorbar(im2, ax=ax[1], shrink=0.75)
 cbar2.set_label("fraction of frames")
 
 # Third heatmap
-im3 = ax[2].imshow(redesigned_array[0:3, :], cmap="coolwarm", interpolation="none", origin="lower", vmin=0.0, vmax=1.0)
+im3 = ax[2].imshow(redesigned_array[0:2, :], cmap="coolwarm", interpolation="none", origin="lower", vmin=0.0, vmax=1.0)
 ax[2].set_xticks(np.arange(len(codenames)))
 ax[2].set_xticklabels(codenames, rotation=25, fontsize=8)
 for i, xtick_label in enumerate(ax[2].get_xticklabels()):
     xtick_label.set_color(codename_label_colors[i])
-ax[2].set_yticks([0, 1, 2])
-ax[2].set_yticklabels(["correctly\nbound", "incorrectly\nbound", "correct+\nincorrect"], rotation=30)
+ax[2].set_yticks([0, 1])
+ax[2].set_yticklabels(["correctly\nbound", "incorrectly\nbound"], rotation=30)
 ax[2].set_title("fraction time bound X fraction correct ETE")
 cbar3 = fig.colorbar(im3, ax=ax[2], shrink=0.75)
 cbar3.set_label("fraction of time\nsimulation behaves")
