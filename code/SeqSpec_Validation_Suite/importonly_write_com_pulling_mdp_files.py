@@ -80,7 +80,7 @@ integrator            = sd            ; stochastic dynamics integrator
                                       ; when used, tcoupl and nsttcouple are ignored
 tinit                 = 0
 dt                    = 0.010         ; units of ps
-nsteps                = 50000000      ; units of (ps) ==> total time = 0.5 us == 500 ns
+nsteps                = 20000000      ; units of (ps) ==> total time = 0.2 us == 200 ns
 comm-mode             = Linear        ; remove the center of mass translational velocity
 nstcomm               = 10            ; frequency for center of mass motion removal
 ld-seed               = -1            ; -1 means pseudo-randomly chosen, picked by GROMACS

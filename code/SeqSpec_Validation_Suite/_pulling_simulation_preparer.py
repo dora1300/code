@@ -64,6 +64,11 @@ if __name__ == "__main__":
                         "protein of interest.", 
                         type=str, required=True)
     
+    parser.add_argument("-path_to_validation_code", help="OMIT FINAL SLASH -- The absolute path corresponding to where the validation "\
+                        "code lives. This is likely going to be the GitHub repo! Default is for my personal linux machine. Be "\
+                        "careful in your use of this!", 
+                        type=str, default="/home/mando/code/code/SeqSpec_Validation_Suite")
+    
     parser.add_argument("-protein_codename", help="[Required always] The *codename* of the protein you wish to simulate, but this "
                         "does not necessarily correlate to an actual name that would go into a topology file.",
                         type=str)
@@ -87,12 +92,18 @@ if __name__ == "__main__":
     parser.add_argument("-nrexcl", help="[default: 3] The value to set for the `nrexcl` component of the protein.itp file. " \
                         "This is relevant for determining pairs and excluded nonbonded interactions.",
                         type=str, default="3")
+    
+    parser.add_argument("-pairs_to_add", help="[default: None] A *list* (not comma separated) of numeric values which correspond to the " \
+                        "types of interactions (e.g. 1-4, 1-5, 1-6 etc.) that you want to add. The numbers you " \
+                            "provide are the second of the pair i.e. 1-N. All [pairs] WILL BE SCALED by the " \
+                            "1-4 scale factors provided below for pairtypes.itp.", 
+                            nargs="+", type=int, default=None)
 
-    parser.add_argument("-use_og_pair_terms", help="[T/F] [default: False] switch. Activate this switch (!) to use the 1-4 AND "\
-                        "1-5 pair terms that come from my OG CC-LLPS simulation framework. The OG pairs were used to help stabilize "\
-                        "the backbone helix but can be removed as desired. This will of course overwrite nonbonded interactions "\
-                        "for 1-4 and 1-5 regardless of what nrexcl is set to. **These pairs were developed with nrexcl=4 just FYI**",
-                        action="store_true", default=False)
+    # parser.add_argument("-use_og_pair_terms", help="[T/F] [default: False] switch. Activate this switch (!) to use the 1-4 AND "\
+    #                     "1-5 pair terms that come from my OG CC-LLPS simulation framework. The OG pairs were used to help stabilize "\
+    #                     "the backbone helix but can be removed as desired. This will of course overwrite nonbonded interactions "\
+    #                     "for 1-4 and 1-5 regardless of what nrexcl is set to. **These pairs were developed with nrexcl=4 just FYI**",
+    #                     action="store_true", default=False)
 
     #
     #   Specific arguments for specifying nonbonded information for nonbonded.itp
@@ -151,6 +162,16 @@ if __name__ == "__main__":
                         "give to the pairtypes.itp file! "
                         "Please include the extension and the path if appropriate!",
                         default="itp_pairtypes.itp")
+    
+    parser.add_argument("-pairtypes_epsilon_file", help="[default: None] (OPTIONAL) the 20x20 matrix/CSV " \
+                        "file containig epsilons that are specific for the pairtypes.itp AND [pairs]. " \
+                        "If nothing is provided, then it uses the relevant nonbonded_parameter matrix.", 
+                        default=None)
+    
+    parser.add_argument("-pairtypes_sigma_file", help="[default: None] (OPTIONAL) the 20x20 matrix/CSV " \
+                        "file containig **sigmas** that are specific for the pairtypes.itp AND [pairs]. " \
+                        "If nothing is provided, then it uses the relevant nonbonded_parameter matrix.", 
+                        default=None)
     
     parser.add_argument("-epsilon_14_scale_factor", help="[default: 1.0] A factor by which to multiplicatively scale the epsilons "\
                         "used in the pairtypes.itp file, which will affect ONLY the 1-4 pairs if gen-pairs = yes", default=1.0,
@@ -231,12 +252,8 @@ if __name__ == "__main__":
     TEMP = args.simulation_T
 
     # 4- set Global variables, non-arguments
-    if args.run_on_alpine:
-        CODEDIR = "/projects/dora1300/code/code/SeqSpec_Validation_Suite"
-    else:
-        CODEDIR = "/home/mando/code/code/SeqSpec_Validation_Suite"
-        # this houses all the code and directories necessary 
-        # specific for my linux distribution
+    CODEDIR = args.path_to_validation_code
+
 
     # 5- define the path of the working simulation directory specific to this protein
     # PROTNAME will be a combination of all the proteins that are getting simulated
@@ -326,11 +343,21 @@ if __name__ == "__main__":
         #   But only do this if I pass the argument specifying to do this.
         #
         if args.include_pairtypes_file:
-            array_of_pairtype_sigmas = write_pairtypes.load_calculated_sigmas(True, args.sigma_matrix_file,
+            if args.pairtypes_epsilon_file is None:
+                pairtypes_epsilon_source = str(args.epsilon_matrix_file)
+            else:
+                pairtypes_epsilon_source = str(args.pairtypes_epsilon_file)
+
+            if args.pairtypes_sigma_file is None:
+                pairtypes_sigma_source = str(args.sigma_matrix_file)
+            else:
+                pairtypes_sigma_source = str(args.pairtypes_sigma_file)
+
+            array_of_pairtype_sigmas = write_pairtypes.load_calculated_sigmas(True, pairtypes_sigma_source,
                                                     False, None,
                                                     False, args.combining_rule)
             
-            pairtype_file_contents = write_pairtypes.write_pairtypes_itp(args.epsilon_matrix_file, array_of_pairtype_sigmas, 
+            pairtype_file_contents = write_pairtypes.write_pairtypes_itp(pairtypes_epsilon_source, array_of_pairtype_sigmas, 
                                                     args.epsilon_14_scale_factor, args.sigma_14_scale_factor)
 
             # Step 3 -- save the itp file to disk!
@@ -363,7 +390,7 @@ if __name__ == "__main__":
                                 "given in the backbone file. Please check your files and try again.")
             write_prot_itp.write_itp_text(input_protein_name, input_protein_sequence, 
                                         protein_name, input_protein_backbones, 
-                                        f"itp_{protein_name}.itp", args.nrexcl, args.use_og_pair_terms)
+                                        f"itp_{protein_name}.itp", args.nrexcl, args.pairs_to_add)
             list_of_itp_files.append(f"itp_{protein_name}.itp")
 
 
@@ -467,7 +494,7 @@ if __name__ == "__main__":
             
             final_frame_txt = f"mpirun -np 1 gmx_mpi trjconv -f {args.protein_codename}_md.xtc " \
                 f"-s md_{args.protein_codename}.tpr -pbc whole -center -o final_frame.pdb " \
-                f"-b 500000 -e 500000 -n ../starting_structure/index_{args.protein_codename}.ndx"
+                f"-b 200000 -e 200000 -n ../starting_structure/index_{args.protein_codename}.ndx"
             
             start_frame_txt = f"mpirun -np 1 gmx_mpi trjconv -f {args.protein_codename}_md.xtc " \
                 f"-s md_{args.protein_codename}.tpr -pbc whole -center -o starting_frame.pdb " \
@@ -479,7 +506,7 @@ if __name__ == "__main__":
             
             final_frame_txt = f"gmx trjconv -f {args.protein_codename}_md.xtc " \
                 f"-s md_{args.protein_codename}.tpr -pbc whole -center -o final_frame.pdb " \
-                f"-b 500000 -e 500000 -n ../starting_structure/index_{args.protein_codename}.ndx"
+                f"-b 200000 -e 200000 -n ../starting_structure/index_{args.protein_codename}.ndx"
             
             start_frame_txt = f"gmx trjconv -f {args.protein_codename}_md.xtc " \
                 f"-s md_{args.protein_codename}.tpr -pbc whole -center -o starting_frame.pdb " \
@@ -527,7 +554,7 @@ if __name__ == "__main__":
             
             final_frame_txt = f"mpirun -np 1 gmx_mpi trjconv -f {args.protein_codename}_md.xtc " \
                 f"-s md_{args.protein_codename}.tpr -pbc whole -center -o final_frame.pdb " \
-                f"-b 500000 -e 500000 -n ../starting_structure/index_{args.protein_codename}.ndx"
+                f"-b 200000 -e 200000 -n ../starting_structure/index_{args.protein_codename}.ndx"
             
             start_frame_txt = f"mpirun -np 1 gmx_mpi trjconv -f {args.protein_codename}_md.xtc " \
                 f"-s md_{args.protein_codename}.tpr -pbc whole -center -o starting_frame.pdb " \
@@ -539,7 +566,7 @@ if __name__ == "__main__":
             
             final_frame_txt = f"gmx trjconv -f {args.protein_codename}_md.xtc " \
                 f"-s md_{args.protein_codename}.tpr -pbc whole -center -o final_frame.pdb " \
-                f"-b 500000 -e 500000 -n ../starting_structure/index_{args.protein_codename}.ndx"
+                f"-b 200000 -e 200000 -n ../starting_structure/index_{args.protein_codename}.ndx"
             
             start_frame_txt = f"gmx trjconv -f {args.protein_codename}_md.xtc " \
                 f"-s md_{args.protein_codename}.tpr -pbc whole -center -o starting_frame.pdb " \

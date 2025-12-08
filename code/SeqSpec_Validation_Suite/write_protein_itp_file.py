@@ -164,7 +164,7 @@ def write_itp_text(protein_name,
                    backbone_scalars,
                    itp_filename,
                    nrexcl_val,
-                   generate_og_pairs):
+                   list_of_pairs):
     """
     Description:
     Arguments:
@@ -173,8 +173,7 @@ def write_itp_text(protein_name,
         molecule_name
         backbone_scalars
         itp_filename
-        use_secondary_structure_info
-        force_adjuster
+        value_of_nrexcl
     Returns:        Nothing. This writes all the generated text to a file.
     """
 
@@ -212,34 +211,52 @@ def write_itp_text(protein_name,
                                            BOND_FORCE)
 
 
-    if generate_og_pairs:
-        pairs_text = f"""
+    pairs_text = f"""
 
 [ pairs ]
-;OG 1-4 & 1-5 pairs from the CC-LLPS simulation framework
-;i    j    func    C6(attrac)    C12(repul)
+; the value of func, V and W are not included because they are read from pairtypes.itp
+;i    j    func    V (attrac)    W (repul)
 """
-        pairs_14_text = helper.generate_pairs_text(seq_length,
-                                                "4",
-                                                backbone_scalars,
-                                                COIL_P14_C6,
-                                                COIL_P14_C12,
-                                                combining_method="mean")
-        pairs_15_text = helper.generate_pairs_text(seq_length,
-                                                "5",
-                                                backbone_scalars,
-                                                COIL_P15_C6,
-                                                COIL_P15_C12,
-                                                combining_method="mean")
-        pairs_text += pairs_14_text
-        pairs_text += pairs_15_text
-
+    if list_of_pairs is None:
+        pairs_text += f"; no pairs added\n"
     else:
-        pairs_text = f"""
+        for pair_num in list_of_pairs:
+            pairs_text += f";    1-{pair_num} pairs\n"
+            for pair_start in range(1, (seq_length-(pair_num-1))+1):
+                # the above range seems complicated. Here's why it's this way:
+                # seq_length for the length of the sequence. +1 because end of range is exclusive.
+                # -(pair_num-1) because then this puts the correct upper bound on the sequence indices that I
+                # can supply to the pairs section. e.g. if pair_num = 4, then the final pair that I can have
+                # is (seq_len-4, seq_len)
+                pairs_text += f"{pair_start} {pair_start+(pair_num-1)}\n"
+    pairs_text += f"\n"
 
-[ pairs ]
-;no pairs provided because OG pair generation was turned off
-"""
+# an update as of 2025 12 06 -- Removing the generation of og_pair types because 
+# these are not sequence specific and aren't relevant. However, I'm keeping it commented out
+# just for posterity.
+#     if generate_og_pairs:
+#         pairs_text = f"""
+#
+# [ pairs ]
+# ;OG 1-4 & 1-5 pairs from the CC-LLPS simulation framework
+# ;i    j    func    C6(attrac)    C12(repul)
+# """
+#         pairs_14_text = helper.generate_pairs_text(seq_length,
+#                                                 "4",
+#                                                 backbone_scalars,
+#                                                 COIL_P14_C6,
+#                                                 COIL_P14_C12,
+#                                                 combining_method="mean")
+#         pairs_15_text = helper.generate_pairs_text(seq_length,
+#                                                 "5",
+#                                                 backbone_scalars,
+#                                                 COIL_P15_C6,
+#                                                 COIL_P15_C12,
+#                                                 combining_method="mean")
+#         pairs_text += pairs_14_text
+#         pairs_text += pairs_15_text
+
+
 
     exclusions_text = f"""
 
@@ -247,6 +264,7 @@ def write_itp_text(protein_name,
 ; no exclusions for a sequence specific protein!
 """
    
+
     angles_text = f"""
 
 [ angles ]
