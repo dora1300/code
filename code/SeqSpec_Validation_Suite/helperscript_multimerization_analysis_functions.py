@@ -41,7 +41,7 @@ def analyze_angles_and_dihedrals(codename,
     avgTorsion = np.average(pseudotorsions.flatten()); stdTorsion = np.std(pseudotorsions.flatten())
 
 
-    fig, (ax1, ax2) = plt.subplots(ncols=2, nrows=1, figsize=(10, 5))
+    fig, (ax1, ax2) = plt.subplots(ncols=2, nrows=1, figsize=(8, 5))
     ax1.hist(pseudoangles.flatten(), density=True, color="goldenrod", bins="sqrt", alpha=0.75,
         label=f"{avgAngle:.3f}+/-{stdAngle:.3f}")
     ax2.hist(pseudotorsions.flatten(), density=True, color="grey", bins="sqrt", alpha=0.75,
@@ -56,6 +56,7 @@ def analyze_angles_and_dihedrals(codename,
     ax2.grid(color="black", alpha=0.35, linestyle=":")
     ax2.set_xlim(-185, 185)
     ax2.legend()
+    plt.suptitle(f"Backbone angle analysis for: {codename}")
     plt.tight_layout()
     plt.savefig(f"plot_{codename}_backbone_angles.png", dpi=300)
     plt.close()
@@ -99,7 +100,7 @@ def analyze_orientation_torsions(codename,
         axs.set_xlim(-185, 185)
         # axs[I].set_title(f"coil{I+1}--coil{I+2}")
         axs.grid(color="black", alpha=0.35, linestyle=":")
-    fig.suptitle("N-terminal orientation torsions")
+    fig.suptitle(f"N-terminal orientation torsions: {codename}")
     plt.tight_layout()
     plt.savefig(f"plot_{codename}_Nterminal_orientation_torsions.png", dpi=300)
     plt.close()
@@ -124,7 +125,7 @@ def analyze_orientation_torsions(codename,
         axs.set_xlim(-185, 185)
         # axs[I].set_title(f"coil{I+1}--coil{I+2}")
         axs.grid(color="black", alpha=0.35, linestyle=":")
-    fig.suptitle("C-terminal orientation torsions")
+    fig.suptitle(f"C-terminal orientation torsions: {codename}")
     plt.tight_layout()
     plt.savefig(f"plot_{codename}_Cterminal_orientation_torsions.png", dpi=300)
     plt.close()
@@ -261,6 +262,7 @@ def analyze_reference_point_distances(codename,
     plt.xticks([1, 2, 3], [f"Correctly\nbound", f"Incorrectly\nbound", "Unbound"], rotation=50)
     plt.ylim(0, 1)
     plt.ylabel("fraction of simulation frames")
+    plt.suptitle(f"Multimerization analysis: {codename}")
     plt.tight_layout()
     plt.savefig(f"plot_{codename}_areCoilsInMultimer.png", dpi=300)
     plt.close()
@@ -357,6 +359,7 @@ def analyze_ETE_distances(codename,
     
     plt.xticks([1.5, 4.5], [f"correct ETE", "incorrect ETE"], rotation=30)
     plt.ylabel(f"fraction of \nsimulation frames")
+    plt.suptitle(f"ETE plot for: {codename}")
     plt.tight_layout()
     plt.savefig(f"plot_{codename}_ETE_fraction_frame.png", dpi=300)
     plt.close()
