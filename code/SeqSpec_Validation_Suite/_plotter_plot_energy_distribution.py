@@ -27,6 +27,12 @@ parser.add_argument("-energy_file", help="[csv] The file containing the LJ energ
 parser.add_argument("-protein_codename", 
                     help="The validation code in question. Useful for making a title.", type=str)
 
+parser.add_argument("-energy_dist_description", help="A brief description of the type of energy distribution being" \
+                    "plotted. default = 'energy distribution'", type=str, default="energy distribution")
+
+parser.add_argument("-distribution_color", help="[default: 'goldenrod'] A custom color to give your energy "\
+                    "distribution. It has to be a matplotlib color.", type=str, default='goldenrod')
+
 parser.add_argument("-output_name", help="A name to add to the final plot.", type=str)
 
 
@@ -48,19 +54,19 @@ avg_total_lj_energy_by_bead = total_lj_energy / total_system_beads
 
 
 fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(5, 5))
-axs[0].hist(total_lj_energy, density=True, bins="sqrt", color="goldenrod", alpha=0.5)
-axs[0].set_title(f"total LJ energy", fontstyle="italic")
+axs[0].hist(total_lj_energy, density=True, bins="sqrt", color=args.distribution_color, alpha=0.5)
+axs[0].set_title(f"total {args.energy_dist_description}", fontstyle="italic")
 axs[0].set_ylabel("density (counts)")
 
-axs[1].hist(avg_total_lj_energy_by_bead, density=True, bins="sqrt", color="goldenrod",
+axs[1].hist(avg_total_lj_energy_by_bead, density=True, bins="sqrt", color=args.distribution_color,
             label=f"Avg: {np.average(avg_total_lj_energy_by_bead):.4f}")
 axs[1].vlines(x=np.average(avg_total_lj_energy_by_bead), ymin=0, ymax=3, color="black", linewidth=1.5)
-axs[1].set_xlabel("LJ energy (kJ/mol)")
+axs[1].set_xlabel(f"{args.energy_dist_description} energy (kJ/mol)")
 axs[1].set_ylabel("density (counts)")
-axs[1].set_title("avg LJ energy per individual bead", fontstyle="italic")
+axs[1].set_title("avg energy per individual bead", fontstyle="italic")
 axs[1].legend()
 
-fig.suptitle(f"energy distribution for: {CODENAME}")
+fig.suptitle(f"{args.energy_dist_description}: {CODENAME}")
 
 plt.tight_layout()
 plt.savefig(f"{OUTPUTNAME}.png", dpi=300)
