@@ -40,11 +40,11 @@ codename_label_colors = []
 for label in codenames:
     try:
         if multdict.validation_dictionary[label][8][0] == "positive":
-            codename_label_colors.append("goldenrod")
+            codename_label_colors.append("forestgreen")
         else:
-            codename_label_colors.append("grey")
+            codename_label_colors.append("dimgrey")
     except:
-        codename_label_colors.append("black")
+        codename_label_colors.append("dimgrey")
 
 # Reshape combined data
 redesigned_array = np.reshape(np.concatenate(total_array), (len(codenames), 7)).T
