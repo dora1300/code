@@ -153,7 +153,7 @@ validation_dictionary = {
     ],
 
     "7d9r" : [["7d9r_chain1", "7d9r_chain2"],
-              [2],
+              [1, 1],
               "2",
               [46, 46],
               [[0, 14, 60, 46]],
