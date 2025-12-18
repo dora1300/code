@@ -7,9 +7,9 @@ codename : [["protein_names_that_go_into_.top", ...],
             [numbers_of_each_type_of_protein,...],
             COM_pulling_number:str,
             [length_of_each_coil,...],
-            [[n,term,torsion,indices,...]],
-            [[c,term,torsion,indices,...]],
-            [[distance,ref,indices,...]],
+            [[n,term,torsion,indices,...]], 0-indexed!!!!!
+            [[c,term,torsion,indices,...]], 0-indexed!!!!!
+            [[distance,ref,indices,...]],   0-indexed!!!!!
             [heptad length for each coil,...],
             ["positive_or_negative_control"]
             [comments about the structure, for posterity]

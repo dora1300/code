@@ -30,6 +30,10 @@ parser.add_argument("-protein_codename",
 parser.add_argument("-energy_dist_description", help="A brief description of the type of energy distribution being" \
                     "plotted. default = 'energy distribution'", type=str, default="energy distribution")
 
+parser.add_argument("-num_beads_normalize", help="The number of beads you wish to divide the total energy by "
+                    "to get the avg per-bead energy. If None, then the number of beads comes from dictionary "
+                    "and is the total number of beads in the simulation.", default=None, type=int)
+
 parser.add_argument("-distribution_color", help="[default: 'goldenrod'] A custom color to give your energy "\
                     "distribution. It has to be a matplotlib color.", type=str, default='goldenrod')
 
@@ -42,8 +46,11 @@ CODENAME = args.protein_codename
 OUTPUTNAME = args.output_name
 
 # I will need the total number of beads!
-protein_dictionary = mult_dict.validation_dictionary[CODENAME]
-total_system_beads = np.sum(np.array(protein_dictionary[3]))
+if args.num_beads_normalize is None:
+    protein_dictionary = mult_dict.validation_dictionary[CODENAME]
+    total_system_beads = np.sum(np.array(protein_dictionary[3]))
+else:
+    total_system_beads = args.num_beads_normalize
 
 
 energy_file = np.loadtxt(f"{ENERGYFILE}", 
@@ -59,12 +66,12 @@ axs[0].set_title(f"total {args.energy_dist_description}", fontstyle="italic")
 axs[0].set_ylabel("density (counts)")
 
 axs[1].hist(avg_total_lj_energy_by_bead, density=True, bins="sqrt", color=args.distribution_color,
-            label=f"Avg: {np.average(avg_total_lj_energy_by_bead):.4f}")
+            label=f"Avg: {np.average(avg_total_lj_energy_by_bead):.4f} per {total_system_beads} beads")
 axs[1].vlines(x=np.average(avg_total_lj_energy_by_bead), ymin=0, ymax=3, color="black", linewidth=1.5)
 axs[1].set_xlabel(f"{args.energy_dist_description} energy (kJ/mol)")
 axs[1].set_ylabel("density (counts)")
 axs[1].set_title("avg energy per individual bead", fontstyle="italic")
-axs[1].legend()
+axs[1].legend(fontsize=10)
 
 fig.suptitle(f"{args.energy_dist_description}: {CODENAME}")
 
