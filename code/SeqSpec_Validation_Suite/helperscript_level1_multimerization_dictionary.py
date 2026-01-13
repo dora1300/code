@@ -7,9 +7,9 @@ codename : [["protein_names_that_go_into_.top", ...],
             [numbers_of_each_type_of_protein,...],
             COM_pulling_number:str,
             [length_of_each_coil,...],
-            [[n,term,torsion,indices,...]], 0-indexed!!!!!
-            [[c,term,torsion,indices,...]], 0-indexed!!!!!
-            [[distance,ref,indices,...]],   0-indexed!!!!!
+            [[n,term,torsion,indices,...]], 0-indexed!!!!! for mdtraj indexing only
+            [[c,term,torsion,indices,...]], 0-indexed!!!!! for mdtraj indexing only
+            [[distance,ref,indices,...]],   0-indexed!!!!! for mdtraj indexing only
             [heptad length for each coil,...],
             ["positive_or_negative_control"]
             [comments about the structure, for posterity]
@@ -27,7 +27,7 @@ validation_dictionary = {
               [21, 21],
               [[1, 8, 29, 22]],
               [[18, 11, 32, 39]],
-              [[1, 22], [8, 29], [11, 32], [18, 39]],
+              [[1, 22], [4, 25], [8, 29], [11, 32], [15, 36], [18, 39]],
               [3, 3],
               ["positive"],
               ["3 hetpad long designer coils from Ramsak et al."]
@@ -39,7 +39,7 @@ validation_dictionary = {
               [28, 28],
               [[1, 11, 39, 29]],
               [[25, 15, 43, 53]],
-              [[1, 29], [11, 39], [15, 43], [25, 53]],
+              [[1, 29], [4, 32], [8, 36], [11, 39], [15, 43], [18, 46], [22, 50], [25, 53]],
               [4, 4],
               ["positive"],
                ["4 hetpad long designer coils from Ramsak et al."]
@@ -52,7 +52,7 @@ validation_dictionary = {
                   [21, 21],
                   [[1, 8, 29, 22]],
                   [[18, 11, 32, 39]],
-                  [[1, 22], [8, 29], [11, 32], [18, 39]],
+                  [[1, 22], [4, 25], [8, 29], [11, 32], [15, 36], [18, 39]],
                   [3, 3],
                   ["positive"],
                   ["3 hetpad long designer coils from Ramsak et al.",
@@ -65,7 +65,7 @@ validation_dictionary = {
                 [21, 21],
                 [[1, 8, 32, 39]],
                 [[18, 11, 32, 22]],
-                [[1, 39], [8, 32], [11, 29], [18, 22]],
+                [[1, 39], [4, 36], [8, 32], [11, 29], [15, 25], [18, 22]],
                 [3, 3],
                 ["positive"],
                 ["3 hetpad long designer coils from Ramsak et al.",
@@ -78,7 +78,7 @@ validation_dictionary = {
             [32, 32],
             [[2, 12, 44, 34]],
             [[26, 16, 48, 58]],
-            [[1, 34], [12, 44], [16, 48], [26, 58]],
+            [[2, 34], [5, 37], [9, 41], [12, 44], [16, 48], [19, 51], [23, 55], [26, 58], [30, 62]],
             [4.5, 4.5],
             ["positive"]
     ],
@@ -89,7 +89,7 @@ validation_dictionary = {
             [30, 30], 
             [[2, 13, 46, 57]],
             [[27, 16, 43, 32]],
-            [[2, 57], [13, 46], [16, 43], [27, 32]],
+            [[2, 57], [6, 53], [9, 50], [13, 46], [16, 43], [20, 39], [23, 36], [27, 32]],
             [4, 4],
             ["positive"]
     ],
@@ -112,7 +112,7 @@ validation_dictionary = {
               [31, 31],
               [[1, 11, 42, 32]],
               [[25, 18, 49, 56]],
-              [[1, 32], [8, 39], [11, 42], [15, 46], [18, 49], [25, 56]],
+              [[1, 32], [4, 35], [8, 39], [11, 42], [15, 46], [18, 49], [22, 53], [25, 56], [29, 60]],
               [4, 4],
               ["positive"],
               ["This comes from PDB code 1ysa. This does not exist in the CC+ database for reasons I don't understand because GCN4 is considered a canonical coiled-coil (leucine zipper).",
@@ -174,7 +174,7 @@ validation_dictionary = {
                  [21, 21],
                  [[1, 8, 29, 22]],
                  [[18, 11, 32, 39]],
-                 [[1, 22], [8, 29], [11, 32], [18, 39]],
+                 [[1, 22], [4, 25], [8, 29], [11, 32], [15, 36], [18, 39]],
                  [3, 3],
                  ["negative"]
     ],
@@ -185,7 +185,7 @@ validation_dictionary = {
                 [21, 21],
                 [[1, 8, 29, 22]],
                 [[18, 11, 32, 39]],
-                [[1, 22], [8, 29], [11, 32], [18, 39]],
+                [[1, 22], [4, 25], [8, 29], [11, 32], [15, 36], [18, 39]],
                 [3, 3],
                 ["negative"]
     ],
@@ -196,7 +196,7 @@ validation_dictionary = {
                [28, 32],
                [[1, 15, 44, 30]],
                [[25, 15, 44, 54]],
-               [[1, 30], [11, 40], [15, 44], [25, 54]],
+               [[1, 30], [4, 33], [8, 27], [12, 40], [15, 44], [18, 47], [22, 51], [25, 54]],
                [4, 4.5],
                ["negative"]
     ],
@@ -207,7 +207,7 @@ validation_dictionary = {
                [28, 30],
                [[1, 11, 39, 29]],
                [[25, 15, 43, 53]],
-               [[1, 29], [11, 39], [15, 43], [25, 53]],
+               [[1, 29], [4, 32], [8, 36], [11, 39], [15, 43], [18, 46], [22, 50], [25, 53]],
                [4, 4.3],
                ["negative"]
     ],
@@ -218,7 +218,7 @@ validation_dictionary = {
                 [32, 30],
                 [[2, 12, 42, 33]],
                 [[25, 16, 47, 57]],
-                [[1, 33], [12, 43], [16, 47], [26, 57]],
+                [[2, 33], [5, 36], [9, 40], [12, 43], [16, 47], [19, 50], [23, 54], [26, 57], [30, 61]],
                 [4.5, 4.3],
                 ["negative"]
     ]
